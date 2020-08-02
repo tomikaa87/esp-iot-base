@@ -13,4 +13,3 @@ The plan is to support the following features:
 * Blynk integration
 * Sophisticated category-based logging
 * Logging to a remote Syslog server through UDP
-* 
