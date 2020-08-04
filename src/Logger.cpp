@@ -79,7 +79,7 @@ void Logger::Private::sendToSyslogServer(
     const auto tm = gmtime(&t);
 
     StreamString payload;
-    payload.printf("<191>1 %04u-%02u-%02uT%02u:%02u:%02uZ %s v%d.%d.%d %s %s - %s",
+    payload.printf("<191>1 %04u-%02u-%02uT%02u:%02u:%02uZ %s v%s %s %s - %s",
         tm->tm_year + 1900,
         tm->tm_mon + 1,
         tm->tm_mday,
@@ -87,9 +87,7 @@ void Logger::Private::sendToSyslogServer(
         tm->tm_min,
         tm->tm_sec,
         hostName,
-        FW_VER_MAJOR,
-        FW_VER_MINOR,
-        FW_VER_PATCH,
+        FW_VER_STR,
         procId,
         msgid,
         message

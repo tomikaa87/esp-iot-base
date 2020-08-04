@@ -20,6 +20,27 @@
 
 #pragma once
 
-#define FW_VER_MAJOR    1
-#define FW_VER_MINOR    0
-#define FW_VER_PATCH    0
+// Define your version numbers here
+#define FW_VER_MAJOR                1
+#define FW_VER_MINOR                0
+#define FW_VER_PATCH                0
+
+#define FW_CORE_APP_VER_MAJOR       1
+#define FW_CORE_APP_VER_MINOR       0
+#define FW_CORE_APP_VER_PATCH       0
+
+// Utility macros
+#define _VER_XSTR(_S) _VER_STR(_S)
+#define _VER_STR(_S) #_S
+
+#define MAKE_VER_STR(_MAJOR, _MINOR, _PATCH) \
+    _VER_XSTR(_MAJOR) "." _VER_XSTR(_MINOR) "." _VER_XSTR(_PATCH)
+
+// Define version string macros here
+#define FW_VER_STR \
+    MAKE_VER_STR(FW_VER_MAJOR, FW_VER_MINOR, FW_VER_PATCH)
+
+#define FW_CORE_APP_VER_STR \
+    MAKE_VER_STR(FW_CORE_APP_VER_MAJOR, FW_CORE_APP_VER_MINOR, FW_CORE_APP_VER_PATCH)
+
+// End

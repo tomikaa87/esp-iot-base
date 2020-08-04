@@ -19,6 +19,7 @@
 */
 
 #include "CoreApplication.h"
+#include "FirmwareVersion.h"
 
 #include "drivers/SimpleI2C.h"
 
@@ -85,6 +86,18 @@ void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
 void CoreApplication::setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler)
 {
     _arduinoOtaEventHandler = std::move(handler);
+}
+
+const std::string& CoreApplication::firmwareVersion()
+{
+    static const std::string v{ FW_VER_STR };
+    return v;
+}
+
+const std::string& CoreApplication::applicationVersion()
+{
+    static const std::string v{ FW_CORE_APP_VER_STR };
+    return v;
 }
 
 void CoreApplication::setupArduinoOta()

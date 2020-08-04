@@ -58,6 +58,9 @@ public:
     void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
     void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);
 
+    static const std::string& firmwareVersion();
+    static const std::string& applicationVersion();
+
 private:
     Logger _log{ "CoreApplication" };
     SystemClock _systemClock;
