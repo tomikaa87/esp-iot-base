@@ -1,5 +1,5 @@
 #include "Config.h"
-#include "Application.h"
+#include "CoreApplication.h"
 
 #include <Arduino.h>
 
@@ -7,7 +7,7 @@
 #include <ESP8266WiFiSTA.h>
 #include <FS.h>
 
-static std::unique_ptr<Application> application;
+static std::unique_ptr<CoreApplication> application;
 
 void ICACHE_RAM_ATTR timer1Isr()
 {
@@ -46,7 +46,7 @@ void setup()
     initializeSerial();
     initWiFi();
 
-    application.reset(new Application);
+    application.reset(new CoreApplication);
 
     Serial.println("Initialization finished");
 }

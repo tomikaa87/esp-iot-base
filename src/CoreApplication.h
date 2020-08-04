@@ -28,18 +28,38 @@
 #include "network/NtpClient.h"
 #include "network/OtaUpdater.h"
 
-#include <queue>
+#include <functional>
 
-class Application
+class CoreApplication
 {
 public:
-    Application();
+    using BlynkUpdateHandler = std::function<void ()>;
+
+    enum class ArduinoOtaEvent {
+        FlashUpdateStarted,
+        FileSystemUpdateStarted,
+        AuthenticationError,
+        BeginError,
+        ConnectError,
+        EndError,
+        ReceiveError,
+        Ended
+    };
+
+    using ArduinoOtaEventHandler = std::function<void (ArduinoOtaEvent)>;
+
+    CoreApplication();
 
     void task();
     void epochTimerIsr();
 
+    BlynkHandler& blynkHandler();
+
+    void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
+    void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);
+
 private:
-    Logger _log{ "Application" };
+    Logger _log{ "CoreApplication" };
     SystemClock _systemClock;
     NtpClient _ntpClient;
     BlynkHandler _blynk;
@@ -54,12 +74,9 @@ private:
 
     static constexpr auto BlynkUpdateIntervalMs = 1000;
     uint32_t _lastBlynkUpdate = 0;
+    BlynkUpdateHandler _blynkUpdateHandler;
 
-    bool _startedFromBlynk = false;
-
-    void setupBlynk();
-
-    void updateBlynk();
+    ArduinoOtaEventHandler _arduinoOtaEventHandler;
 
     void setupArduinoOta();
 };

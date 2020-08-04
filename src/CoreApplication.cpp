@@ -18,13 +18,13 @@
     Created on 2020-08-02
 */
 
-#include "Application.h"
+#include "CoreApplication.h"
 
 #include "drivers/SimpleI2C.h"
 
 #include <ArduinoOTA.h>
 
-Application::Application()
+CoreApplication::CoreApplication()
     : _ntpClient(_systemClock)
     , _otaUpdater(Config::OtaUpdate::FirmwareUpdateUrl, _systemClock)
 {
@@ -36,10 +36,9 @@ Application::Application()
     _settings.load();
 
     setupArduinoOta();
-    setupBlynk();
 }
 
-void Application::task()
+void CoreApplication::task()
 {
     _systemClock.task();
     _ntpClient.task();
@@ -61,26 +60,34 @@ void Application::task()
     // Blynk update loop
     if (_lastBlynkUpdate == 0 || millis() - _lastBlynkUpdate >= BlynkUpdateIntervalMs) {
         _lastBlynkUpdate = millis();
-        updateBlynk();
+
+        if (_blynkUpdateHandler) {
+            _blynkUpdateHandler();
+        }
     }
 }
 
-void ICACHE_RAM_ATTR Application::epochTimerIsr()
+void ICACHE_RAM_ATTR CoreApplication::epochTimerIsr()
 {
     _systemClock.timerIsr();
 }
 
-void Application::setupBlynk()
+BlynkHandler& CoreApplication::blynkHandler()
 {
-
+    return _blynk;
 }
 
-void Application::updateBlynk()
+void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
 {
-
+    _blynkUpdateHandler = std::move(handler);
 }
 
-void Application::setupArduinoOta()
+void CoreApplication::setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler)
+{
+    _arduinoOtaEventHandler = std::move(handler);
+}
+
+void CoreApplication::setupArduinoOta()
 {
     ArduinoOTA.onStart([this] {
         auto type = "";
@@ -91,10 +98,22 @@ void Application::setupArduinoOta()
         }
 
         _log.info("ArduinoOTA: starting update, type=%s", type);
+
+        if (_arduinoOtaEventHandler) {
+            _arduinoOtaEventHandler(
+                ArduinoOTA.getCommand() == U_FLASH
+                    ? ArduinoOtaEvent::FlashUpdateStarted
+                    : ArduinoOtaEvent::FileSystemUpdateStarted
+            );
+        }
     });
 
     ArduinoOTA.onEnd([this] {
-        _log.info("ArduinoOTA: finished");
+        _log.info("ArduinoOTA: ended");
+
+        if (_arduinoOtaEventHandler) {
+            _arduinoOtaEventHandler(ArduinoOtaEvent::Ended);
+        }
     });
 
     ArduinoOTA.onError([this](const ota_error_t error) {
@@ -102,22 +121,42 @@ void Application::setupArduinoOta()
         switch (error) {
             case OTA_AUTH_ERROR:
                 errorStr = "authentication error";
+
+                if (_arduinoOtaEventHandler) {
+                    _arduinoOtaEventHandler(ArduinoOtaEvent::AuthenticationError);
+                }
                 break;
 
             case OTA_BEGIN_ERROR:
                 errorStr = "begin failed";
+
+                if (_arduinoOtaEventHandler) {
+                    _arduinoOtaEventHandler(ArduinoOtaEvent::BeginError);
+                }
                 break;
 
             case OTA_CONNECT_ERROR:
                 errorStr = "connect failed";
+
+                if (_arduinoOtaEventHandler) {
+                    _arduinoOtaEventHandler(ArduinoOtaEvent::ConnectError);
+                }
                 break;
 
             case OTA_END_ERROR:
                 errorStr = "end failed";
+
+                if (_arduinoOtaEventHandler) {
+                    _arduinoOtaEventHandler(ArduinoOtaEvent::EndError);
+                }
                 break;
 
             case OTA_RECEIVE_ERROR:
                 errorStr = "receive failed";
+
+                if (_arduinoOtaEventHandler) {
+                    _arduinoOtaEventHandler(ArduinoOtaEvent::ReceiveError);
+                }
                 break;
         }
 
