@@ -22,11 +22,10 @@
 
 #include "Logger.h"
 
-#include <cstdint>
 #include <functional>
+#include <map>
 
-class BlynkParam;
-class Settings;
+#include <Blynk/BlynkParam.h>
 
 class BlynkHandler
 {
@@ -36,14 +35,28 @@ public:
 
     void task();
 
-    void onBlynkConnected();
-    void onVirtualPinUpdated(int pin, const BlynkParam& param);
-    void onButtonPressed(int pin);
-    void updateVirtualPin(int pin);
+    // Internal handlers for Blynk events
+    void onConnected();
+    void onDisconnected();
+    void onVirtualPinWritten(int pin, const BlynkParam& param);
+    void onVirtualPinRead(int pin);
+
+    using ConnectedHandler = std::function<void ()>;
+    using DisconnectedHandler = std::function<void ()>;
+    using PinWrittenHandler = std::function<void (int pin, const BlynkParam& param)>;
+    using PinReadHandler = std::function<BlynkParam (int pin)>;
+
+    void setConnectedHandler(ConnectedHandler&& handler);
+    void setDisconnectedHandler(DisconnectedHandler&& handler);
+    void setPinReadHandler(int pin, PinReadHandler&& handler);
+    void setPinWrittenHandler(int pin, PinWrittenHandler&& handler);
 
 private:
     Logger _log{ "Blynk" };
 
-    template <typename T, int size>
-    inline void floatToStr(const float f, T(&buf)[size]);
+    ConnectedHandler _connectedHandler;
+    DisconnectedHandler _disconnectedHandler;
+
+    std::map<int, PinReadHandler> _pinReadHandlers;
+    std::map<int, PinWrittenHandler> _pinWrittenHandlers;
 };
