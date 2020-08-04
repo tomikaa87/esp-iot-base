@@ -79,11 +79,6 @@ namespace Config
         static constexpr auto EeramSize = 16384u;
 
         static constexpr auto SettingsBase = 0u;
-
-        static constexpr auto SchedulerDataHeaderBase = 0x80u;
-        static constexpr auto SchedulerDataBase = 0x90u;
-
-        static constexpr auto SchedulerDataHeaderSize = SchedulerDataBase - SchedulerDataHeaderBase;
-        static constexpr auto SchedulerDataSize = EeramSize - SchedulerDataBase;
+        static constexpr auto SettingsSize = EeramSize;
     }
 }

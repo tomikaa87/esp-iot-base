@@ -15,30 +15,18 @@
     along with esp-iot-base.  If not, see <http://www.gnu.org/licenses/>.
 
     Author: Tamas Karpati
-    Created on 2020-08-02
+    Created on 2020-08-04
 */
 
 #pragma once
 
-#include "ISettings.h"
-#include "Logger.h"
+#include <ctime>
 
-#include <cstdint>
-
-class Settings : public ISettings
+class ISystemClock
 {
 public:
-    Settings();
+    virtual ~ISystemClock() = default;
 
-    bool save(AbstractSettingsData& data) override;
-    bool load(AbstractSettingsData& data) override;
-
-    void setLoadDefaultsRequestedHandler(LoadDefaultsRequestedHandler&& handler) override;
-
-private:
-    Logger _log{ "Settings" };
-
-    LoadDefaultsRequestedHandler _loadDefaultsRequestedHandler;
-
-    static uint32_t calculateDataChecksum(AbstractSettingsData& data);
+    virtual std::time_t localTime() const = 0;
+    virtual std::time_t utcTime() const = 0;
 };

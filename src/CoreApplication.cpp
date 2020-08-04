@@ -34,8 +34,6 @@ CoreApplication::CoreApplication()
 
     Drivers::I2C::init();
 
-    _settings.load();
-
     setupArduinoOta();
 }
 
@@ -73,9 +71,19 @@ void ICACHE_RAM_ATTR CoreApplication::epochTimerIsr()
     _systemClock.timerIsr();
 }
 
-BlynkHandler& CoreApplication::blynkHandler()
+IBlynkHandler& CoreApplication::blynkHandler()
 {
     return _blynk;
+}
+
+ISettings& CoreApplication::settings()
+{
+    return _settings;
+}
+
+ISystemClock& CoreApplication::systemClock()
+{
+    return _systemClock;
 }
 
 void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)

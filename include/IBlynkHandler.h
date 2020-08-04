@@ -15,30 +15,25 @@
     along with esp-iot-base.  If not, see <http://www.gnu.org/licenses/>.
 
     Author: Tamas Karpati
-    Created on 2020-08-02
+    Created on 2020-08-04
 */
 
 #pragma once
 
-#include "ISettings.h"
-#include "Logger.h"
+#include <Blynk/BlynkParam.h>
 
-#include <cstdint>
+#include <functional>
 
-class Settings : public ISettings
+class IBlynkHandler
 {
 public:
-    Settings();
+    using ConnectedHandler = std::function<void ()>;
+    using DisconnectedHandler = std::function<void ()>;
+    using PinWrittenHandler = std::function<void (int pin, const BlynkParam& param)>;
+    using PinReadHandler = std::function<BlynkParam (int pin)>;
 
-    bool save(AbstractSettingsData& data) override;
-    bool load(AbstractSettingsData& data) override;
-
-    void setLoadDefaultsRequestedHandler(LoadDefaultsRequestedHandler&& handler) override;
-
-private:
-    Logger _log{ "Settings" };
-
-    LoadDefaultsRequestedHandler _loadDefaultsRequestedHandler;
-
-    static uint32_t calculateDataChecksum(AbstractSettingsData& data);
+    virtual void setConnectedHandler(ConnectedHandler&& handler) = 0;
+    virtual void setDisconnectedHandler(DisconnectedHandler&& handler) = 0;
+    virtual void setPinReadHandler(int pin, PinReadHandler&& handler) = 0;
+    virtual void setPinWrittenHandler(int pin, PinWrittenHandler&& handler) = 0;
 };

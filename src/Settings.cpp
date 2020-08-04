@@ -26,11 +26,6 @@
 
 Settings::Settings()
 {
-    static_assert(
-        sizeof(Data) <= Config::EeramAddresses::SchedulerDataBase - Config::EeramAddresses::SettingsBase,
-        "Settings data doesn't fit in the allocated space"
-    );
-
     _log.info("initializing");
 
     // Disable ASE by default to avoid unnecessary wearing when settings are not changed
@@ -39,56 +34,20 @@ Settings::Settings()
     Drivers::EERAM::setStatus(sr);
 }
 
-void Settings::loadDefaults()
-{
-    _log.info("loading default settings");
-
-    data = {};
-}
-
-void Settings::load()
-{
-    _log.info(
-        "loading settings from EERAM: address=%xh, length=%u",
-        Config::EeramAddresses::SettingsBase,
-        sizeof data
-    );
-
-    const auto ok = Drivers::EERAM::read(
-        Config::EeramAddresses::SettingsBase,
-        reinterpret_cast<uint8_t*>(&data),
-        sizeof data
-    );
-
-    if (!ok) {
-        _log.error("failed to read settings from EERAM");
-    }
-
-    if (calculateDataChecksum() != data.checksum)
-    {
-        _log.warning("checksum error");
-
-        loadDefaults();
-        save();
-    }
-
-    // TODO print settings
-}
-
-void Settings::save()
+bool Settings::save(AbstractSettingsData& data)
 {
     _log.debug(
         "saving settings to EERAM: address=%xh, length=%u",
         Config::EeramAddresses::SettingsBase,
-        sizeof data
+        data.size
     );
 
-    data.checksum = calculateDataChecksum();
+    data.checksum = calculateDataChecksum(data);
 
     bool ok = Drivers::EERAM::write(
         Config::EeramAddresses::SettingsBase,
-        reinterpret_cast<const uint8_t*>(&data),
-        sizeof data
+        data.ptr,
+        data.size
     );
 
     if (ok) {
@@ -99,12 +58,57 @@ void Settings::save()
     } else {
         _log.error("failed to write settings to EERAM");
     }
+
+    return ok;
 }
 
-uint32_t Settings::calculateDataChecksum() const
+bool Settings::load(AbstractSettingsData& data)
+{
+    _log.info(
+        "loading settings from EERAM: address=%xh, length=%u",
+        Config::EeramAddresses::SettingsBase,
+        data.size
+    );
+
+    const auto ok = Drivers::EERAM::read(
+        Config::EeramAddresses::SettingsBase,
+        data.ptr,
+        data.size
+    );
+
+    if (!ok) {
+        _log.error("failed to read settings from EERAM");
+
+        if (_loadDefaultsRequestedHandler) {
+            _loadDefaultsRequestedHandler(LoadDefaultsReason::ReadFailure);
+        }
+
+        return false;
+    }
+
+    if (calculateDataChecksum(data) != data.checksum)
+    {
+        _log.warning("checksum error");
+
+        if (_loadDefaultsRequestedHandler) {
+            _loadDefaultsRequestedHandler(LoadDefaultsReason::ChecksumError);
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+void Settings::setLoadDefaultsRequestedHandler(LoadDefaultsRequestedHandler&& handler)
+{
+    _loadDefaultsRequestedHandler = std::move(handler);
+}
+
+uint32_t Settings::calculateDataChecksum(AbstractSettingsData& data)
 {
     return crc32(
-        reinterpret_cast<const uint8_t*>(&data) + sizeof data.checksum,
-        sizeof data - sizeof data.checksum
+        data.ptr + sizeof(AbstractSettingsData::checksum),
+        data.size - sizeof(AbstractSettingsData::checksum)
     );
 }

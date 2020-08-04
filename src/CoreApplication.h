@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "IBlynkHandler.h"
+#include "ISystemClock.h"
 #include "Logger.h"
 #include "Settings.h"
 #include "SystemClock.h"
@@ -53,7 +55,9 @@ public:
     void task();
     void epochTimerIsr();
 
-    BlynkHandler& blynkHandler();
+    IBlynkHandler& blynkHandler();
+    ISettings& settings();
+    ISystemClock& systemClock();
 
     void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
     void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);

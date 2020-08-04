@@ -20,11 +20,12 @@
 
 #pragma once
 
+#include "ISystemClock.h"
 #include "Logger.h"
 
 #include <ctime>
 
-class SystemClock
+class SystemClock : public ISystemClock
 {
 public:
     static constexpr auto NtpSyncIntervalSec = 1800;
@@ -35,8 +36,8 @@ public:
     void task();
     void timerIsr();
 
-    std::time_t localTime() const;
-    std::time_t utcTime() const;
+    std::time_t localTime() const override;
+    std::time_t utcTime() const override;
 
     void setUtcTime(std::time_t t);
 

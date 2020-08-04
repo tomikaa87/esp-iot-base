@@ -20,14 +20,13 @@
 
 #pragma once
 
+#include "IBlynkHandler.h"
 #include "Logger.h"
 
 #include <functional>
 #include <map>
 
-#include <Blynk/BlynkParam.h>
-
-class BlynkHandler
+class BlynkHandler : public IBlynkHandler
 {
 public:
     BlynkHandler();
@@ -41,15 +40,10 @@ public:
     void onVirtualPinWritten(int pin, const BlynkParam& param);
     void onVirtualPinRead(int pin);
 
-    using ConnectedHandler = std::function<void ()>;
-    using DisconnectedHandler = std::function<void ()>;
-    using PinWrittenHandler = std::function<void (int pin, const BlynkParam& param)>;
-    using PinReadHandler = std::function<BlynkParam (int pin)>;
-
-    void setConnectedHandler(ConnectedHandler&& handler);
-    void setDisconnectedHandler(DisconnectedHandler&& handler);
-    void setPinReadHandler(int pin, PinReadHandler&& handler);
-    void setPinWrittenHandler(int pin, PinWrittenHandler&& handler);
+    void setConnectedHandler(ConnectedHandler&& handler) override;
+    void setDisconnectedHandler(DisconnectedHandler&& handler) override;
+    void setPinReadHandler(int pin, PinReadHandler&& handler) override;
+    void setPinWrittenHandler(int pin, PinWrittenHandler&& handler) override;
 
 private:
     Logger _log{ "Blynk" };
