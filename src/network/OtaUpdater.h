@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "ApplicationConfig.h"
 #include "Logger.h"
 
 #include <ctime>
@@ -33,7 +34,7 @@ class SystemClock;
 class OtaUpdater
 {
 public:
-    OtaUpdater(std::string updateBaseUrl, const SystemClock& systemClock);
+    OtaUpdater(const ApplicationConfig& appConfig, const SystemClock& systemClock);
     ~OtaUpdater();
 
     void task();
@@ -54,9 +55,9 @@ public:
     void setUpdateStateChangedHandler(UpdateStateChangedHandler&& handler);
 
 private:
-    const std::string _updateBaseUrl;
-    const SystemClock& _systemClock;
     Logger _log{ "OtaUpdater" };
+    const ApplicationConfig& _appConfig;
+    const SystemClock& _systemClock;
     UpdateStateChangedHandler _updateStateChangedHandler;
 
     enum class State

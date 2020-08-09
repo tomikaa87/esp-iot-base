@@ -25,9 +25,13 @@
 
 #include <ArduinoOTA.h>
 
-CoreApplication::CoreApplication()
-    : _ntpClient(_systemClock)
-    , _otaUpdater(Config::OtaUpdate::FirmwareUpdateUrl, _systemClock)
+CoreApplication::CoreApplication(const ApplicationConfig& appConfig)
+    : _appConfig(appConfig)
+    , _ntpClient(_systemClock)
+    , _blynk(_appConfig)
+    , _otaUpdater(_appConfig, _systemClock)
+    , _settingsPersistence(0)
+    , _settings(_settingsPersistence)
 {
     // TODO de-init before SystemClock is destroyed
     Logger::setup(_systemClock);
@@ -43,6 +47,7 @@ void CoreApplication::task()
     _ntpClient.task();
     _otaUpdater.task();
     _blynk.task();
+    _settings.task();
 
     ArduinoOTA.handle();
 
@@ -76,7 +81,7 @@ IBlynkHandler& CoreApplication::blynkHandler()
     return _blynk;
 }
 
-ISettings& CoreApplication::settings()
+ISettingsHandler& CoreApplication::settings()
 {
     return _settings;
 }

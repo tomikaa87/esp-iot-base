@@ -29,10 +29,10 @@ void initializeSerial()
     Serial.begin(74880);
 }
 
-void initWiFi()
+void initWiFi(const ApplicationConfig& appConfig)
 {
     Serial.println("Connecting to WiFi");
-    WiFi.begin(Config::WiFi::SSID, Config::WiFi::Password);
+    WiFi.begin(appConfig.wifi.ssid, appConfig.wifi.password);
 }
 
 #include "drivers/SimpleI2C.h"
@@ -42,11 +42,13 @@ using rtc = Drivers::MCP7940N;
 
 void setup()
 {
+    static ApplicationConfig appConfig;
+
     initializeEpochTimer();
     initializeSerial();
-    initWiFi();
+    initWiFi(appConfig);
 
-    application.reset(new CoreApplication);
+    application.reset(new CoreApplication(appConfig));
 
     Serial.println("Initialization finished");
 }

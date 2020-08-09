@@ -18,10 +18,9 @@
     Created on 2020-08-02
 */
 
-#include "Config.h"
 #include "FirmwareVersion.h"
 #include "Logger.h"
-#include "SystemClock.h"
+#include "ISystemClock.h"
 
 #include <Arduino.h>
 
@@ -29,13 +28,13 @@
 
 Logger::Private* Logger::_p = nullptr;
 
-void Logger::setup(const SystemClock& systemClock)
+void Logger::setup(const ApplicationConfig& appConfig, const ISystemClock& systemClock)
 {
     if (Logger::_p) {
         delete Logger::_p;
     }
 
-    Logger::_p = new Logger::Private(systemClock);
+    Logger::_p = new Logger::Private(appConfig, systemClock);
 }
 
 Logger::Logger(std::string category)
@@ -68,7 +67,7 @@ void Logger::Private::sendToSyslogServer(
     const char* procId,
     const char* msgid
 ) {
-    if (!udp.beginPacket(Config::Logging::SyslogServerHost, Config::Logging::SyslogServerPort)) {
+    if (!udp.beginPacket(appConfig.logging.syslog.serverHostName, appConfig.logging.syslog.serverPort)) {
 #if 0
         Serial.println("[W][Logger] can't send Syslog payload, failed to begin UDP packet");
 #endif

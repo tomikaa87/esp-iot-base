@@ -20,15 +20,22 @@
 
 #pragma once
 
+#include "ApplicationConfig.h"
+#include "BaseConfig.h"
 #include "IBlynkHandler.h"
+#include "ISettingsHandler.h"
 #include "ISystemClock.h"
 #include "Logger.h"
-#include "Settings.h"
+#include "SettingsHandler.h"
 #include "SystemClock.h"
 
 #include "network/BlynkHandler.h"
 #include "network/NtpClient.h"
 #include "network/OtaUpdater.h"
+
+#ifdef IOT_PERSISTENCE_USE_EERAM
+#include "EeramPersistence.h"
+#endif
 
 #include <functional>
 
@@ -50,13 +57,13 @@ public:
 
     using ArduinoOtaEventHandler = std::function<void (ArduinoOtaEvent)>;
 
-    CoreApplication();
+    CoreApplication(const ApplicationConfig& appConfig);
 
     void task();
     void epochTimerIsr();
 
     IBlynkHandler& blynkHandler();
-    ISettings& settings();
+    ISettingsHandler& settings();
     ISystemClock& systemClock();
 
     void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
@@ -67,10 +74,14 @@ public:
 
 private:
     Logger _log{ "CoreApplication" };
+    const ApplicationConfig& _appConfig;
     SystemClock _systemClock;
     NtpClient _ntpClient;
     BlynkHandler _blynk;
-    Settings _settings;
+#ifdef IOT_PERSISTENCE_USE_EERAM
+    EeramPersistence _settingsPersistence;
+#endif
+    SettingsHandler _settings;
     OtaUpdater _otaUpdater;
 
     bool _updateChecked = false;

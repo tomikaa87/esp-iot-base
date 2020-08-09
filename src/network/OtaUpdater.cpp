@@ -27,8 +27,8 @@
 #include <ESP8266WiFiSTA.h>
 #include <ESP8266httpUpdate.h>
 
-OtaUpdater::OtaUpdater(std::string updateBaseUrl, const SystemClock& systemClock)
-    : _updateBaseUrl(std::move(updateBaseUrl))
+OtaUpdater::OtaUpdater(const ApplicationConfig& appConfig, const SystemClock& systemClock)
+    : _appConfig(appConfig)
     , _systemClock(systemClock)
 {
     _log.info("initializing");
@@ -203,7 +203,7 @@ void OtaUpdater::createVersionInfoRequest()
         _log.warning("HTTP client already created");
     }
 
-    std::string url{ _updateBaseUrl };
+    std::string url{ _appConfig.otaUpdate.updateUrl };
     url.append("/").append(WiFi.macAddress().c_str()).append("/version");
 
     _log.debug("creating version info request, URL: %s", url.c_str());
@@ -255,7 +255,7 @@ OtaUpdater::VersionCheckResult OtaUpdater::checkVersion(const std::string& versi
 
 std::string OtaUpdater::getFwUpdateUrl() const
 {
-    std::string url{ _updateBaseUrl };
+    std::string url{ _appConfig.otaUpdate.updateUrl };
     url.append("/").append(WiFi.macAddress().c_str()).append("/firmware.bin");
 
     return url;

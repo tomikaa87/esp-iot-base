@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "ApplicationConfig.h"
 #include "IBlynkHandler.h"
 #include "Logger.h"
 
@@ -29,7 +30,7 @@
 class BlynkHandler : public IBlynkHandler
 {
 public:
-    BlynkHandler();
+    BlynkHandler(const ApplicationConfig& appConfig);
     ~BlynkHandler();
 
     void task();
@@ -47,6 +48,7 @@ public:
 
 private:
     Logger _log{ "Blynk" };
+    const ApplicationConfig& _appConfig;
 
     ConnectedHandler _connectedHandler;
     DisconnectedHandler _disconnectedHandler;

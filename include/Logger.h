@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "Config.h"
+#include "ApplicationConfig.h"
 
 #include <string>
 
@@ -28,12 +28,12 @@
 #include <StreamString.h>
 #include <WiFiUdp.h>
 
-class SystemClock;
+class ISystemClock;
 
 class Logger
 {
 public:
-    static void setup(const SystemClock& systemClock);
+    static void setup(const ISystemClock& systemClock);
 
     explicit Logger(std::string category);
 
@@ -60,8 +60,8 @@ public:
             ss.printf(fmt, params...);
         }
 
-        if (Config::Network::SyslogEnabled && _p) {
-            _p->sendToSyslogServer(Config::Logging::SyslogHostName, ss.c_str());
+        if (_p && _p->appConfig.logging.syslog.enabled) {
+            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
         }
 
         // Print new line after sending the message to Syslog server
@@ -129,8 +129,8 @@ public:
 
         Serial.print(ss);
 
-        if (Config::Network::SyslogEnabled && _p) {
-            _p->sendToSyslogServer(Config::Logging::SyslogHostName, ss.c_str());
+        if (_p && _p->appConfig.logging.syslog.enabled) {
+            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
         }
 
         return Block{ _inBlock };
@@ -148,12 +148,14 @@ private:
 
     struct Private
     {
-        Private(const SystemClock& systemClock)
-            : systemClock(systemClock)
+        Private(const ApplicationConfig& appConfig, const ISystemClock& systemClock)
+            : appConfig(appConfig)
+            , systemClock(systemClock)
         {}
 
         WiFiUDP udp;
-        const SystemClock& systemClock;
+        const ApplicationConfig& appConfig;
+        const ISystemClock& systemClock;
 
         void sendToSyslogServer(
             const char* hostName,

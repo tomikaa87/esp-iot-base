@@ -20,25 +20,26 @@
 
 #pragma once
 
-#include "ISettings.h"
-#include "Logger.h"
+#ifdef IOT_ENABLE_PERSISTENCE
 
-#include <cstdint>
-
-class Settings : public ISettings
+namespace Config
 {
-public:
-    Settings();
+    namespace Persistence
+    {
+// EERAM -->
+#if defined(IOT_PERSISTENCE_EERAM_47L16) || defined(IOT_PERSISTENCE_EERAM_47L04)
+#define IOT_PERSISTENCE_USE_EERAM
+#if defined(IOT_PERSISTENCE_EERAM_47L16)
+        static constexpr auto EeramSize = 16384u;
+#elif defined(IOT_PERSISTENCE_EERAM_47L04)
+        static constexpr auto EeramSize = 4096u;
+#endif
+// SPIFFS -->
+#elif defined(IOT_PERSISTENCE_SPIFFS)
+#define IOT_PERSISTENCE_USE_SPIFFS
+        static constexpr auto SettingsFileName = "settings.bin";
+#endif
+    }
+}
 
-    bool save(AbstractSettingsData& data) override;
-    bool load(AbstractSettingsData& data) override;
-
-    void setLoadDefaultsRequestedHandler(LoadDefaultsRequestedHandler&& handler) override;
-
-private:
-    Logger _log{ "Settings" };
-
-    LoadDefaultsRequestedHandler _loadDefaultsRequestedHandler;
-
-    static uint32_t calculateDataChecksum(AbstractSettingsData& data);
-};
+#endif // IOT_ENABLE_PERSISTENCE

@@ -34,6 +34,7 @@ class SystemClock;
 class NtpClient
 {
 public:
+    // TODO move these to ApplicationConfig
     static constexpr auto Server = "europe.pool.ntp.org";
     static constexpr auto UpdateInterval = 24 * 60 * 60;
     static constexpr auto NtpPacketSize = 48;

@@ -19,7 +19,6 @@
 */
 
 #include "BlynkHandler.h"
-#include "Config.h"
 
 #define ENABLE_DEBUG
 
@@ -315,17 +314,18 @@ HANDLE_BLYNK_WRITE(V125)
 HANDLE_BLYNK_WRITE(V126)
 HANDLE_BLYNK_WRITE(V127)
 
-BlynkHandler::BlynkHandler()
+BlynkHandler::BlynkHandler(const ApplicationConfig& appConfig)
+    : _appConfig(appConfig)
 {
     _log.debug("initializing: server=%s, port=%d",
-        Config::Blynk::ServerHostName,
-        Config::Blynk::ServerPort
+        _appConfig.blynk.serverHostName,
+        _appConfig.blynk.serverPort
     );
 
     Blynk.config(
-        Config::Blynk::AppToken,
-        Config::Blynk::ServerHostName,
-        Config::Blynk::ServerPort
+        _appConfig.blynk.appToken,
+        _appConfig.blynk.serverHostName,
+        _appConfig.blynk.serverPort
     );
 
     g_blynkHandler = this;
