@@ -52,6 +52,18 @@ struct ApplicationConfig
         const char* updateUrl = "";
     };
 
+    struct Rtc
+    {
+        bool enableDigitalTrimming = false;
+        bool enableCoarseDigitalTrimming = false;
+        int8_t digitalTrimValue = 0;
+    };
+
+    struct Serial
+    {
+        uint32_t baudRate = 74880;
+    };
+
     struct WebServer
     {
         uint16_t port = 80;
@@ -66,6 +78,8 @@ struct ApplicationConfig
     Blynk blynk;
     Logging logging;
     OtaUpdate otaUpdate;
+    Rtc rtc;
+    Serial serial;
     WebServer webServer;
     WiFi wifi;
 };

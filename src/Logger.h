@@ -33,7 +33,7 @@ class ISystemClock;
 class Logger
 {
 public:
-    static void setup(const ISystemClock& systemClock);
+    static void setup(const ApplicationConfig& appConfig, const ISystemClock& systemClock);
 
     explicit Logger(std::string category);
 
