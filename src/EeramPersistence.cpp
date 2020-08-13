@@ -26,12 +26,6 @@ EeramPersistence::EeramPersistence(const int baseAddress)
     : _baseAddress{ baseAddress }
 {
     _log.debug("creating: baseAddress=%d", _baseAddress);
-
-    // Disable ASE by default to avoid unnecessary wearing when settings are not changed
-    _log.debug("disabling ASE");
-    Drivers::EERAM::StatusReg sr;
-    sr.value = 0;
-    Drivers::EERAM::setStatus(sr);
 }
 
 bool EeramPersistence::allocate(int address, size_t size)
