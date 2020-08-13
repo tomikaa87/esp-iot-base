@@ -136,7 +136,7 @@ public:
 
     static void writeGpo(bool high);
 
-    static void setDigitalTrimming(int8_t ppm);
+    static void setDigitalTrimming(int8_t trimval);
     static int8_t getDigitalTrimming();
     static void setCoarseTrimmingEnabled(bool enabled);
 

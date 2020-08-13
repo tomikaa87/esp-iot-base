@@ -198,9 +198,14 @@ void MCP7940N::writeGpo(bool high)
     write(Register::CONTROL, value);
 }
 
-void MCP7940N::setDigitalTrimming(int8_t ppm)
+void MCP7940N::setDigitalTrimming(int8_t trimval)
 {
-    write(Register::OSCTRIM, static_cast<uint8_t>(ppm));
+    const uint8_t value =
+        trimval < 0
+            ? (-trimval) & 0x7f                 // SIGN=0
+            : 0b10000000 | (trimval & 0x7f);    // SIGN=1
+
+    write(Register::OSCTRIM, value);
 }
 
 int8_t MCP7940N::getDigitalTrimming()
