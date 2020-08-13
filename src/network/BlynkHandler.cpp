@@ -363,9 +363,13 @@ void BlynkHandler::onVirtualPinWritten(const int pin, const BlynkParam& param)
 {
     _log.debug("virtual pin written: pin=%d", pin);
 
+    if (_genericPinWrittenHandler) {
+        _genericPinWrittenHandler(pin, toVariant(param));
+    }
+
     const auto& handler = _pinWrittenHandlers[pin];
     if (handler) {
-        handler(pin, param);
+        handler(pin, toVariant(param));
     }
 }
 
@@ -373,9 +377,13 @@ void BlynkHandler::onVirtualPinRead(const int pin)
 {
     _log.debug("virtual pin read: pin=%d", pin);
 
+    if (_genericPinReadHandler) {
+        writeVariant(pin, _genericPinReadHandler(pin));
+    }
+
     const auto& handler = _pinReadHandlers[pin];
     if (handler) {
-        Blynk.virtualWrite(pin, handler(pin));
+        writeVariant(pin, handler(pin));
     }
 }
 
@@ -394,7 +402,82 @@ void BlynkHandler::setPinReadHandler(const int pin, PinReadHandler&& handler)
     _pinReadHandlers[pin] = std::move(handler);
 }
 
+void BlynkHandler::setPinReadHandler(PinReadHandler&& handler)
+{
+    _genericPinReadHandler = std::move(handler);
+}
+
 void BlynkHandler::setPinWrittenHandler(const int pin, PinWrittenHandler&& handler)
 {
     _pinWrittenHandlers[pin] = std::move(handler);
+}
+
+void BlynkHandler::setPinWrittenHandler(PinWrittenHandler&& handler)
+{
+    _genericPinWrittenHandler = std::move(handler);
+}
+
+void BlynkHandler::writePin(int pin, const Variant& value)
+{
+    writeVariant(pin, value);
+}
+
+Variant BlynkHandler::toVariant(const BlynkParam& param)
+{
+    if (param.isEmpty()) {
+        return {};
+    }
+
+    const auto* valstr = param.asString();
+
+    if (!valstr) {
+        return {};
+    }
+
+    const auto len = strlen(valstr);
+
+    if (len == 0) {
+        return {};
+    }
+
+    char* endptr = nullptr;
+
+    // Try to convert into integer
+    const int integerValue = std::strtol(valstr, &endptr, 10);
+    if (strlen(endptr) == 0) {
+        return Variant{ integerValue };
+    }
+
+    // Try to fall back to double
+    const auto doubleValue = std::strtod(valstr, &endptr);
+    if (strlen(endptr) == 0) {
+        return Variant{ doubleValue };
+    }
+
+    // Value is not a number, return a string
+    return Variant{ valstr };
+}
+
+void BlynkHandler::writeVariant(const int pin, const Variant& value)
+{
+    switch (value.type()) {
+        case Variant::Type::Empty:
+            return;
+
+        case Variant::Type::Integer:
+            Blynk.virtualWrite(pin, static_cast<int>(value));
+            return;
+
+        case Variant::Type::Float:
+            Blynk.virtualWrite(pin, static_cast<float>(value));
+            return;
+
+        case Variant::Type::Double:
+            Blynk.virtualWrite(pin, static_cast<double>(value));
+            return;
+
+        case Variant::Type::String:
+            Blynk.virtualWrite(pin, static_cast<const char*>(value));
+            return;
+    }
 }

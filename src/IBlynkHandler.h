@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <Blynk/BlynkParam.h>
+#include "Variant.h"
 
 #include <functional>
 
@@ -29,11 +29,15 @@ class IBlynkHandler
 public:
     using ConnectedHandler = std::function<void ()>;
     using DisconnectedHandler = std::function<void ()>;
-    using PinWrittenHandler = std::function<void (int pin, const BlynkParam& param)>;
-    using PinReadHandler = std::function<BlynkParam (int pin)>;
+    using PinWrittenHandler = std::function<void (int pin, const Variant& param)>;
+    using PinReadHandler = std::function<Variant (int pin)>;
 
     virtual void setConnectedHandler(ConnectedHandler&& handler) = 0;
     virtual void setDisconnectedHandler(DisconnectedHandler&& handler) = 0;
     virtual void setPinReadHandler(int pin, PinReadHandler&& handler) = 0;
+    virtual void setPinReadHandler(PinReadHandler&& handler) = 0;
     virtual void setPinWrittenHandler(int pin, PinWrittenHandler&& handler) = 0;
+    virtual void setPinWrittenHandler(PinWrittenHandler&& handler) = 0;
+
+    virtual void writePin(int pin, const Variant& value) = 0;
 };

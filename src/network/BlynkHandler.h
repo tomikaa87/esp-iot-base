@@ -24,6 +24,8 @@
 #include "IBlynkHandler.h"
 #include "Logger.h"
 
+#include <Blynk/BlynkParam.h>
+
 #include <functional>
 #include <map>
 
@@ -44,7 +46,11 @@ public:
     void setConnectedHandler(ConnectedHandler&& handler) override;
     void setDisconnectedHandler(DisconnectedHandler&& handler) override;
     void setPinReadHandler(int pin, PinReadHandler&& handler) override;
+    void setPinReadHandler(PinReadHandler&& handler) override;
     void setPinWrittenHandler(int pin, PinWrittenHandler&& handler) override;
+    void setPinWrittenHandler(PinWrittenHandler&& handler) override;
+
+    void writePin(int pin, const Variant& value) override;
 
 private:
     Logger _log{ "Blynk" };
@@ -54,5 +60,10 @@ private:
     DisconnectedHandler _disconnectedHandler;
 
     std::map<int, PinReadHandler> _pinReadHandlers;
+    PinReadHandler _genericPinReadHandler;
     std::map<int, PinWrittenHandler> _pinWrittenHandlers;
+    PinWrittenHandler _genericPinWrittenHandler;
+
+    static Variant toVariant(const BlynkParam& param);
+    static void writeVariant(int pin, const Variant& value);
 };
