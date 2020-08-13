@@ -18,87 +18,178 @@
     Created on 2020-08-02
 */
 
+#include "BaseConfig.h"
 #include "CoreApplication.h"
 #include "FirmwareVersion.h"
+#include "Logger.h"
+#include "SettingsHandler.h"
+#include "SystemClock.h"
 
+#ifdef IOT_PERSISTENCE_USE_EERAM
+#include "EeramPersistence.h"
+#endif
+
+#include "drivers/MCP7940N.h"
 #include "drivers/SimpleI2C.h"
 
+#include "network/BlynkHandler.h"
+#include "network/NtpClient.h"
+#include "network/OtaUpdater.h"
+
+#include <Arduino.h>
 #include <ArduinoOTA.h>
+#include <FS.h>
+
+namespace Detail
+{
+    ICACHE_RAM_ATTR std::function<void ()> epochTimerIsrFunc;
+
+    void ICACHE_RAM_ATTR timer1Isr()
+    {
+        if (epochTimerIsrFunc) {
+            epochTimerIsrFunc();
+        }
+    }
+}
+
+struct CoreApplication::Private
+{
+    Private(
+        const ApplicationConfig& appConfig
+    )
+        : appConfig(appConfig)
+        , ntpClient(systemClock)
+        , blynk(appConfig)
+        , otaUpdater(appConfig, systemClock)
+        , settingsPersistence(0)
+        , settings(settingsPersistence)
+    {
+        // Serial port
+        setupSerialPort();
+
+        // Epoch timer
+        Detail::epochTimerIsrFunc = [this] {
+            epochTimerIsr();
+        };
+        setupEpochTimer();
+
+        // WiFI
+        setupWiFiStation();
+
+        // File system
+        setupFileSystem();
+
+        // I2C bus
+        Drivers::I2C::init();
+
+        // RTC
+        setupRtcDigitalTrimming();
+
+        // Arduino OTA
+        setupArduinoOta();
+
+        // TODO de-init before SystemClock is destroyed
+        Logger::setup(appConfig, systemClock);
+    }
+
+    ~Private()
+    {
+        Detail::epochTimerIsrFunc = {};
+    }
+
+    Logger log{ "CoreApplication" };
+    const ApplicationConfig& appConfig;
+    SystemClock systemClock;
+    NtpClient ntpClient;
+    BlynkHandler blynk;
+    OtaUpdater otaUpdater;
+#ifdef IOT_PERSISTENCE_USE_EERAM
+    EeramPersistence settingsPersistence;
+#endif
+    SettingsHandler settings;
+
+    bool updateChecked = false;
+    uint32_t updateCheckTimer = 0;
+
+    static constexpr auto SlowLoopUpdateIntervalMs = 500;
+    uint32_t lastSlowLoopUpdate = 0;
+
+    static constexpr auto BlynkUpdateIntervalMs = 1000;
+    uint32_t lastBlynkUpdate = 0;
+    BlynkUpdateHandler blynkUpdateHandler;
+
+    ArduinoOtaEventHandler arduinoOtaEventHandler;
+
+    void epochTimerIsr();
+    void setupArduinoOta();
+
+    void setupSerialPort();
+    void setupWiFiStation();
+    void setupEpochTimer();
+    void setupFileSystem();
+    void setupRtcDigitalTrimming();
+};
 
 CoreApplication::CoreApplication(const ApplicationConfig& appConfig)
-    : _appConfig(appConfig)
-    , _ntpClient(_systemClock)
-    , _blynk(_appConfig)
-    , _otaUpdater(_appConfig, _systemClock)
-    , _settingsPersistence(0)
-    , _settings(_settingsPersistence)
+    : _p(new Private(appConfig))
 {
-    // TODO de-init before SystemClock is destroyed
-    Logger::setup(_systemClock);
-
-    Drivers::I2C::init();
-
-    setupArduinoOta();
 }
+
+CoreApplication::~CoreApplication() = default;
 
 void CoreApplication::task()
 {
-    _systemClock.task();
-    _ntpClient.task();
-    _otaUpdater.task();
-    _blynk.task();
-    _settings.task();
+    _p->systemClock.task();
+    _p->ntpClient.task();
+    _p->otaUpdater.task();
+    _p->blynk.task();
+    _p->settings.task();
 
     ArduinoOTA.handle();
 
     // Slow loop
-    if (_lastSlowLoopUpdate == 0 || millis() - _lastSlowLoopUpdate >= SlowLoopUpdateIntervalMs) {
-        _lastSlowLoopUpdate = millis();
+    if (_p->lastSlowLoopUpdate == 0 || millis() - _p->lastSlowLoopUpdate >= Private::SlowLoopUpdateIntervalMs) {
+        _p->lastSlowLoopUpdate = millis();
 
-        if (!_updateChecked && WiFi.isConnected() && millis() - _updateCheckTimer >= 5000) {
-            _updateChecked = true;
-            _otaUpdater.forceUpdate();
+        if (!_p->updateChecked && WiFi.isConnected() && millis() - _p->updateCheckTimer >= 5000) {
+            _p->updateChecked = true;
+            _p->otaUpdater.forceUpdate();
         }
     }
 
     // Blynk update loop
-    if (_lastBlynkUpdate == 0 || millis() - _lastBlynkUpdate >= BlynkUpdateIntervalMs) {
-        _lastBlynkUpdate = millis();
+    if (_p->lastBlynkUpdate == 0 || millis() - _p->lastBlynkUpdate >= Private::BlynkUpdateIntervalMs) {
+        _p->lastBlynkUpdate = millis();
 
-        if (_blynkUpdateHandler) {
-            _blynkUpdateHandler();
+        if (_p->blynkUpdateHandler) {
+            _p->blynkUpdateHandler();
         }
     }
 }
 
-void ICACHE_RAM_ATTR CoreApplication::epochTimerIsr()
-{
-    _systemClock.timerIsr();
-}
-
 IBlynkHandler& CoreApplication::blynkHandler()
 {
-    return _blynk;
+    return _p->blynk;
 }
 
 ISettingsHandler& CoreApplication::settings()
 {
-    return _settings;
+    return _p->settings;
 }
 
 ISystemClock& CoreApplication::systemClock()
 {
-    return _systemClock;
+    return _p->systemClock;
 }
 
 void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
 {
-    _blynkUpdateHandler = std::move(handler);
+    _p->blynkUpdateHandler = std::move(handler);
 }
 
 void CoreApplication::setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler)
 {
-    _arduinoOtaEventHandler = std::move(handler);
+    _p->arduinoOtaEventHandler = std::move(handler);
 }
 
 const std::string& CoreApplication::firmwareVersion()
@@ -113,7 +204,12 @@ const std::string& CoreApplication::applicationVersion()
     return v;
 }
 
-void CoreApplication::setupArduinoOta()
+void ICACHE_RAM_ATTR CoreApplication::Private::epochTimerIsr()
+{
+    systemClock.timerIsr();
+}
+
+void CoreApplication::Private::setupArduinoOta()
 {
     ArduinoOTA.onStart([this] {
         auto type = "";
@@ -123,10 +219,10 @@ void CoreApplication::setupArduinoOta()
             type = "file system";
         }
 
-        _log.info("ArduinoOTA: starting update, type=%s", type);
+        log.info("ArduinoOTA: starting update, type=%s", type);
 
-        if (_arduinoOtaEventHandler) {
-            _arduinoOtaEventHandler(
+        if (arduinoOtaEventHandler) {
+            arduinoOtaEventHandler(
                 ArduinoOTA.getCommand() == U_FLASH
                     ? ArduinoOtaEvent::FlashUpdateStarted
                     : ArduinoOtaEvent::FileSystemUpdateStarted
@@ -135,10 +231,10 @@ void CoreApplication::setupArduinoOta()
     });
 
     ArduinoOTA.onEnd([this] {
-        _log.info("ArduinoOTA: ended");
+        log.info("ArduinoOTA: ended");
 
-        if (_arduinoOtaEventHandler) {
-            _arduinoOtaEventHandler(ArduinoOtaEvent::Ended);
+        if (arduinoOtaEventHandler) {
+            arduinoOtaEventHandler(ArduinoOtaEvent::Ended);
         }
     });
 
@@ -148,46 +244,90 @@ void CoreApplication::setupArduinoOta()
             case OTA_AUTH_ERROR:
                 errorStr = "authentication error";
 
-                if (_arduinoOtaEventHandler) {
-                    _arduinoOtaEventHandler(ArduinoOtaEvent::AuthenticationError);
+                if (arduinoOtaEventHandler) {
+                    arduinoOtaEventHandler(ArduinoOtaEvent::AuthenticationError);
                 }
                 break;
 
             case OTA_BEGIN_ERROR:
                 errorStr = "begin failed";
 
-                if (_arduinoOtaEventHandler) {
-                    _arduinoOtaEventHandler(ArduinoOtaEvent::BeginError);
+                if (arduinoOtaEventHandler) {
+                    arduinoOtaEventHandler(ArduinoOtaEvent::BeginError);
                 }
                 break;
 
             case OTA_CONNECT_ERROR:
                 errorStr = "connect failed";
 
-                if (_arduinoOtaEventHandler) {
-                    _arduinoOtaEventHandler(ArduinoOtaEvent::ConnectError);
+                if (arduinoOtaEventHandler) {
+                    arduinoOtaEventHandler(ArduinoOtaEvent::ConnectError);
                 }
                 break;
 
             case OTA_END_ERROR:
                 errorStr = "end failed";
 
-                if (_arduinoOtaEventHandler) {
-                    _arduinoOtaEventHandler(ArduinoOtaEvent::EndError);
+                if (arduinoOtaEventHandler) {
+                    arduinoOtaEventHandler(ArduinoOtaEvent::EndError);
                 }
                 break;
 
             case OTA_RECEIVE_ERROR:
                 errorStr = "receive failed";
 
-                if (_arduinoOtaEventHandler) {
-                    _arduinoOtaEventHandler(ArduinoOtaEvent::ReceiveError);
+                if (arduinoOtaEventHandler) {
+                    arduinoOtaEventHandler(ArduinoOtaEvent::ReceiveError);
                 }
                 break;
         }
 
-        _log.error("ArduinoOTA: update failed, error: %s", errorStr);
+        log.error("ArduinoOTA: update failed, error: %s", errorStr);
     });
 
     ArduinoOTA.begin();
+}
+
+void CoreApplication::Private::setupSerialPort()
+{
+    Serial.begin(appConfig.serial.baudRate);
+}
+
+void CoreApplication::Private::setupWiFiStation()
+{
+    log.info("Setting up WiFi station: SSID=%s", appConfig.wifi.ssid);
+
+    WiFi.begin(appConfig.wifi.ssid, appConfig.wifi.password);
+}
+
+void CoreApplication::Private::setupEpochTimer()
+{
+    log.info("Setting up Timer1 as epoch timer");
+
+    timer1_isr_init();
+    timer1_attachInterrupt(Detail::timer1Isr);
+    timer1_enable(TIM_DIV256, TIM_EDGE, TIM_LOOP);
+    timer1_write(100);
+}
+
+void CoreApplication::Private::setupFileSystem()
+{
+    log.info("Setting up file system");
+
+    SPIFFS.begin();
+}
+
+void CoreApplication::Private::setupRtcDigitalTrimming()
+{
+    if (!appConfig.rtc.enableDigitalTrimming) {
+        return;
+    }
+
+    log.info("Setting up RTC digital trimming: value=%d, coarse=%s",
+        appConfig.rtc.digitalTrimValue,
+        appConfig.rtc.enableCoarseDigitalTrimming ? "yes" : "no"
+    );
+
+    Drivers::MCP7940N::setCoarseTrimmingEnabled(appConfig.rtc.enableCoarseDigitalTrimming);
+    Drivers::MCP7940N::setDigitalTrimming(appConfig.rtc.digitalTrimValue);
 }

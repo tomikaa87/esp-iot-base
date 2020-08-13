@@ -21,23 +21,11 @@
 #pragma once
 
 #include "ApplicationConfig.h"
-#include "BaseConfig.h"
 #include "IBlynkHandler.h"
 #include "ISettingsHandler.h"
 #include "ISystemClock.h"
-#include "Logger.h"
-#include "SettingsHandler.h"
-#include "SystemClock.h"
 
-#include "network/BlynkHandler.h"
-#include "network/NtpClient.h"
-#include "network/OtaUpdater.h"
-
-#ifdef IOT_PERSISTENCE_USE_EERAM
-#include "EeramPersistence.h"
-#endif
-
-#include <functional>
+#include <memory>
 
 class CoreApplication
 {
@@ -58,9 +46,9 @@ public:
     using ArduinoOtaEventHandler = std::function<void (ArduinoOtaEvent)>;
 
     CoreApplication(const ApplicationConfig& appConfig);
+    ~CoreApplication();
 
     void task();
-    void epochTimerIsr();
 
     IBlynkHandler& blynkHandler();
     ISettingsHandler& settings();
@@ -73,29 +61,6 @@ public:
     static const std::string& applicationVersion();
 
 private:
-    Logger _log{ "CoreApplication" };
-    const ApplicationConfig& _appConfig;
-    SystemClock _systemClock;
-    NtpClient _ntpClient;
-    BlynkHandler _blynk;
-#ifdef IOT_PERSISTENCE_USE_EERAM
-    EeramPersistence _settingsPersistence;
-#endif
-    SettingsHandler _settings;
-    OtaUpdater _otaUpdater;
-
-    bool _updateChecked = false;
-    uint32_t _updateCheckTimer = 0;
-
-    static constexpr auto SlowLoopUpdateIntervalMs = 500;
-    uint32_t _lastSlowLoopUpdate = 0;
-
-    static constexpr auto BlynkUpdateIntervalMs = 1000;
-    uint32_t _lastBlynkUpdate = 0;
-    BlynkUpdateHandler _blynkUpdateHandler;
-
-    ArduinoOtaEventHandler _arduinoOtaEventHandler;
-
-    void setupArduinoOta();
+    struct Private;
+    std::unique_ptr<Private> _p;
 };
-
