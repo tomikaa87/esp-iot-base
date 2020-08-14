@@ -49,14 +49,6 @@ bool SettingsHandler::registerSettingMemory(uint8_t* ptr, size_t size)
 
     _nextAddress += size;
 
-    // std::cout
-    //     << "SettingsHandler::registerSettingMemory: ptr=" << (void*)ptr
-    //     << ", size=" << size
-    //     << ", address=" << smd.address
-    //     << ", nextAddress=" << _nextAddress
-    //     << ", checksum=0x" << std::hex << std::setw(4) << std::setfill('0') << smd.checksum << std::dec
-    //     << std::endl;
-
     return _persistence.allocate(smd.address, smd.size);
 }
 
