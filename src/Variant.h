@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with esp-iot-base.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     Author: Tamas Karpati
     Created on 2020-08-13
 */

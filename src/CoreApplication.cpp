@@ -20,7 +20,6 @@
 
 #include "BaseConfig.h"
 #include "CoreApplication.h"
-#include "FirmwareVersion.h"
 #include "Logger.h"
 #include "SettingsHandler.h"
 #include "SystemClock.h"
@@ -190,18 +189,6 @@ void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
 void CoreApplication::setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler)
 {
     _p->arduinoOtaEventHandler = std::move(handler);
-}
-
-const std::string& CoreApplication::firmwareVersion()
-{
-    static const std::string v{ FW_VER_STR };
-    return v;
-}
-
-const std::string& CoreApplication::applicationVersion()
-{
-    static const std::string v{ FW_CORE_APP_VER_STR };
-    return v;
 }
 
 void ICACHE_RAM_ATTR CoreApplication::Private::epochTimerIsr()

@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "VersionNumber.h"
+
 #include <cstdint>
 
 struct ApplicationConfig
@@ -74,6 +76,9 @@ struct ApplicationConfig
         const char* ssid = "";
         const char* password = "";
     };
+
+    const VersionNumber applicationVersion{ 1, 0, 0 };
+    VersionNumber firmwareVersion;
 
     Blynk blynk;
     Logging logging;

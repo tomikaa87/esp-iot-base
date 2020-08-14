@@ -18,7 +18,6 @@
     Created on 2020-08-02
 */
 
-#include "FirmwareVersion.h"
 #include "Logger.h"
 #include "ISystemClock.h"
 
@@ -86,7 +85,7 @@ void Logger::Private::sendToSyslogServer(
         tm->tm_min,
         tm->tm_sec,
         hostName,
-        FW_VER_STR,
+        _p ? _p->appConfig.firmwareVersion.toString().c_str() : "?.?.?",
         procId,
         msgid,
         message

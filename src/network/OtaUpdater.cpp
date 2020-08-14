@@ -18,7 +18,6 @@
     Created on 2020-08-02
 */
 
-#include "FirmwareVersion.h"
 #include "OtaUpdater.h"
 #include "SystemClock.h"
 
@@ -220,33 +219,13 @@ OtaUpdater::VersionCheckResult OtaUpdater::checkVersion(const std::string& versi
         return VersionCheckResult::CannotCheckVersion;
     }
 
-    int major = 0;
-    int minor = 0;
-    int patch = 0;
+    unsigned major = 0;
+    unsigned minor = 0;
+    unsigned patch = 0;
 
     sscanf(versionCheckResponse.c_str(), "%u.%u.%u", &major, &minor, &patch);
 
-    if (major < FW_VER_MAJOR) {
-        return VersionCheckResult::NoUpdateNeeded;
-    }
-
-    if (major > FW_VER_MAJOR) {
-        return VersionCheckResult::UpdateNeeded;
-    }
-
-    if (minor < FW_VER_MINOR) {
-        return VersionCheckResult::NoUpdateNeeded;
-    }
-
-    if (minor > FW_VER_MINOR) {
-        return VersionCheckResult::UpdateNeeded;
-    }
-
-    if (patch < FW_VER_PATCH) {
-        return VersionCheckResult::NoUpdateNeeded;
-    }
-
-    if (patch > FW_VER_PATCH) {
+    if (VersionNumber{ major, minor, patch } > _appConfig.firmwareVersion) {
         return VersionCheckResult::UpdateNeeded;
     }
 
