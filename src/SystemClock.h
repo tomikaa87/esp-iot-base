@@ -51,8 +51,11 @@ private:
     int _localTimeOffsetMinutes = 60;
     int _localTimeDstOffsetMinutes = 60;
 
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
+    void setupHwRtc();
     void updateFromRtc();
     void updateRtc();
+#endif
 
     static bool isDst(std::time_t t);
 };

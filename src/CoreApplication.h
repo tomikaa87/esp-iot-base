@@ -51,8 +51,12 @@ public:
     void task();
 
     IBlynkHandler& blynkHandler();
+#ifdef IOT_ENABLE_PERSISTENCE
     ISettingsHandler& settings();
+#endif
+#ifdef IOT_ENABLE_SYSTEM_CLOCK
     ISystemClock& systemClock();
+#endif
 
     void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
     void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);

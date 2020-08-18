@@ -20,40 +20,31 @@
 
 #include "SystemClock.h"
 
-#include "drivers/MCP7940N.h"
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
 
+#include "drivers/MCP7940N.h"
 using rtc = Drivers::MCP7940N;
+
+#endif // IOT_SYSTEM_CLOCK_HW_RTC
 
 SystemClock::SystemClock()
 {
     _log.info("initializing");
 
-    if (rtc::getPowerFailFlag()) {
-        _log.warning("power failure detected");
-        rtc::clearPowerFailFlag();
-    }
-
-    rtc::setBatteryEnabled(true);
-    rtc::setOscillatorEnabled(true);
-
-    // TODO this check is bogus
-    if (!rtc::isOscillatorRunning()) {
-        _log.warning("RTC oscillator has stopped");
-    }
-
-    // Enable square wave output on MFP pin
-    rtc::setOutputConfig(rtc::OutputConfig::SquareWave);
-    rtc::setSquareWaveOutputFrequency(rtc::SquareWaveFrequency::Output4096Hz);
-
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
+    setupHwRtc();
     updateFromRtc();
+#endif
 }
 
 void SystemClock::task()
 {
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
     if (_lastRtcSync > 0 && _epoch - _lastRtcSync > RtcSyncIntervalSec) {
         _log.info("automatic update from RTC triggered");
         updateFromRtc();
     }
+#endif
 }
 
 void ICACHE_RAM_ATTR SystemClock::timerIsr()
@@ -84,7 +75,32 @@ void SystemClock::setUtcTime(const std::time_t t)
     _log.info("setting UTC time: %ld", t);
 
     _epoch = t;
+
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
     updateRtc();
+#endif
+}
+
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
+
+void SystemClock::setupHwRtc()
+{
+    if (rtc::getPowerFailFlag()) {
+        _log.warning("power failure detected");
+        rtc::clearPowerFailFlag();
+    }
+
+    rtc::setBatteryEnabled(true);
+    rtc::setOscillatorEnabled(true);
+
+    // TODO this check is bogus
+    if (!rtc::isOscillatorRunning()) {
+        _log.warning("RTC oscillator has stopped");
+    }
+
+    // Enable square wave output on MFP pin
+    rtc::setOutputConfig(rtc::OutputConfig::SquareWave);
+    rtc::setSquareWaveOutputFrequency(rtc::SquareWaveFrequency::Output4096Hz);
 }
 
 void SystemClock::updateFromRtc()
@@ -141,6 +157,8 @@ void SystemClock::updateRtc()
         tm->tm_sec
     );
 }
+
+#endif // IOT_SYSTEM_CLOCK_HW_RTC
 
 bool SystemClock::isDst(const std::time_t t)
 {

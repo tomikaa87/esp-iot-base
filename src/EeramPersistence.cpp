@@ -20,6 +20,9 @@
 
 #include "BaseConfig.h"
 #include "EeramPersistence.h"
+
+#ifdef IOT_ENABLE_PERSISTENCE
+
 #include "drivers/EERAM.h"
 
 EeramPersistence::EeramPersistence(const int baseAddress)
@@ -80,3 +83,5 @@ bool EeramPersistence::read(int address, uint8_t* data, size_t size)
 
     return true;
 }
+
+#endif // IOT_ENABLE_PERSISTENCE

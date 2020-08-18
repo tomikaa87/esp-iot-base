@@ -36,7 +36,12 @@ class NtpClient
 public:
     // TODO move these to ApplicationConfig
     static constexpr auto Server = "europe.pool.ntp.org";
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
     static constexpr auto UpdateInterval = 24 * 60 * 60;
+#else
+    // Software RTC needs more frequent updates to be accurate
+    static constexpr auto UpdateInterval = 10 * 60;
+#endif
     static constexpr auto NtpPacketSize = 48;
     static constexpr auto SeventyYears = 2208988800ul;
     static constexpr auto NtpPort = 123;

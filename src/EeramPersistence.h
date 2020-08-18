@@ -20,6 +20,8 @@
 
 #pragma once
 
+#ifdef IOT_ENABLE_PERSISTENCE
+
 #include "ISettingsPersistence.h"
 #include "Logger.h"
 
@@ -36,3 +38,5 @@ private:
     Logger _log{ "EERAM" };
     const int _baseAddress = 0;
 };
+
+#endif // IOT_ENABLE_PERSISTENCE

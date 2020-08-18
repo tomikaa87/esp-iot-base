@@ -43,3 +43,13 @@ namespace Config
 }
 
 #endif // IOT_ENABLE_PERSISTENCE
+
+#ifdef IOT_ENABLE_SYSTEM_CLOCK
+
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
+
+#else
+#define IOT_SYSTEM_CLOCK_SW_RTC
+#endif
+
+#endif // IOT_ENABLE_SYSTEM_CLOCK

@@ -28,7 +28,10 @@
 #include "EeramPersistence.h"
 #endif
 
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
 #include "drivers/MCP7940N.h"
+#endif
+
 #include "drivers/SimpleI2C.h"
 
 #include "network/BlynkHandler.h"
@@ -60,8 +63,10 @@ struct CoreApplication::Private
         , ntpClient(systemClock)
         , blynk(appConfig)
         , otaUpdater(appConfig, systemClock)
+#ifdef IOT_ENABLE_PERSISTENCE
         , settingsPersistence(0)
         , settings(settingsPersistence)
+#endif
     {
         // Serial port
         setupSerialPort();
@@ -82,7 +87,9 @@ struct CoreApplication::Private
         Drivers::I2C::init();
 
         // RTC
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
         setupRtcDigitalTrimming();
+#endif
 
         // Arduino OTA
         setupArduinoOta();
@@ -98,14 +105,18 @@ struct CoreApplication::Private
 
     Logger log{ "CoreApplication" };
     const ApplicationConfig& appConfig;
+#ifdef IOT_ENABLE_SYSTEM_CLOCK
     SystemClock systemClock;
     NtpClient ntpClient;
+#endif
     BlynkHandler blynk;
     OtaUpdater otaUpdater;
 #ifdef IOT_PERSISTENCE_USE_EERAM
     EeramPersistence settingsPersistence;
 #endif
+#ifdef IOT_ENABLE_PERSISTENCE
     SettingsHandler settings;
+#endif
 
     bool updateChecked = false;
     uint32_t updateCheckTimer = 0;
@@ -138,11 +149,15 @@ CoreApplication::~CoreApplication() = default;
 
 void CoreApplication::task()
 {
+#ifdef IOT_ENABLE_SYSTEM_CLOCK
     _p->systemClock.task();
     _p->ntpClient.task();
+#endif
     _p->otaUpdater.task();
     _p->blynk.task();
+#ifdef IOT_ENABLE_PERSISTENCE
     _p->settings.task();
+#endif
 
     ArduinoOTA.handle();
 
@@ -171,15 +186,19 @@ IBlynkHandler& CoreApplication::blynkHandler()
     return _p->blynk;
 }
 
+#ifdef IOT_ENABLE_PERSISTENCE
 ISettingsHandler& CoreApplication::settings()
 {
     return _p->settings;
 }
+#endif
 
+#ifdef IOT_ENABLE_SYSTEM_CLOCK
 ISystemClock& CoreApplication::systemClock()
 {
     return _p->systemClock;
 }
+#endif
 
 void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
 {
@@ -304,6 +323,7 @@ void CoreApplication::Private::setupFileSystem()
     SPIFFS.begin();
 }
 
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
 void CoreApplication::Private::setupRtcDigitalTrimming()
 {
     if (!appConfig.rtc.enableDigitalTrimming) {
@@ -318,3 +338,4 @@ void CoreApplication::Private::setupRtcDigitalTrimming()
     Drivers::MCP7940N::setCoarseTrimmingEnabled(appConfig.rtc.enableCoarseDigitalTrimming);
     Drivers::MCP7940N::setDigitalTrimming(appConfig.rtc.digitalTrimValue);
 }
+#endif
