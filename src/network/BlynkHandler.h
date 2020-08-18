@@ -52,6 +52,8 @@ public:
 
     void writePin(int pin, const Variant& value) override;
 
+    void writeTerminal(int pin, const char* text) override;
+
 private:
     Logger _log{ "Blynk" };
     const ApplicationConfig& _appConfig;

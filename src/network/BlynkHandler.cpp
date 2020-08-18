@@ -422,6 +422,13 @@ void BlynkHandler::writePin(int pin, const Variant& value)
     writeVariant(pin, value);
 }
 
+void BlynkHandler::writeTerminal(const int pin, const char* text)
+{
+    WidgetTerminal terminal{ pin };
+    terminal.println(text);
+    terminal.flush();
+}
+
 Variant BlynkHandler::toVariant(const BlynkParam& param)
 {
     if (param.isEmpty()) {

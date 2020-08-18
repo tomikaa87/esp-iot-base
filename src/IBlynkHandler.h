@@ -40,4 +40,6 @@ public:
     virtual void setPinWrittenHandler(PinWrittenHandler&& handler) = 0;
 
     virtual void writePin(int pin, const Variant& value) = 0;
+
+    virtual void writeTerminal(int pin, const char* text) = 0;
 };
