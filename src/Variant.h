@@ -70,29 +70,17 @@ public:
 
     explicit operator int() const
     {
-        if (_type != Type::Integer) {
-            return {};
-        }
-
-        return _storage.integerValue;
+        return getNumericValue<int>();
     }
 
     explicit operator float() const
     {
-        if (_type != Type::Float) {
-            return {};
-        }
-
-        return _storage.floatValue;
+        return getNumericValue<float>();
     }
 
     explicit operator double() const
     {
-        if (_type != Type::Double) {
-            return {};
-        }
-
-        return _storage.doubleValue;
+        return getNumericValue<double>();
     }
 
     explicit operator const char*() const
@@ -190,4 +178,22 @@ private:
 
     Storage _storage;
     Type _type;
+
+    template <typename ReturnType>
+    ReturnType getNumericValue() const
+    {
+        switch (_type) {
+            case Type::Double:
+                return static_cast<ReturnType>(_storage.doubleValue);
+
+            case Type::Float:
+                return static_cast<ReturnType>(_storage.floatValue);
+
+            case Type::Integer:
+                return static_cast<ReturnType>(_storage.integerValue);
+
+            default:
+                return ReturnType{};
+        }
+    }
 };
