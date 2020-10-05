@@ -42,18 +42,6 @@
 #include <ArduinoOTA.h>
 #include <FS.h>
 
-namespace Detail
-{
-    ICACHE_RAM_ATTR std::function<void ()> epochTimerIsrFunc;
-
-    void ICACHE_RAM_ATTR timer1Isr()
-    {
-        if (epochTimerIsrFunc) {
-            epochTimerIsrFunc();
-        }
-    }
-}
-
 struct CoreApplication::Private
 {
     Private(
@@ -68,13 +56,12 @@ struct CoreApplication::Private
         , settings(settingsPersistence)
 #endif
     {
+        instance = this;
+
         // Serial port
         setupSerialPort();
 
         // Epoch timer
-        Detail::epochTimerIsrFunc = [this] {
-            epochTimerIsr();
-        };
         setupEpochTimer();
 
         // WiFI
@@ -100,7 +87,7 @@ struct CoreApplication::Private
 
     ~Private()
     {
-        Detail::epochTimerIsrFunc = {};
+        instance = nullptr;
     }
 
     Logger log{ "CoreApplication" };
@@ -130,7 +117,8 @@ struct CoreApplication::Private
 
     ArduinoOtaEventHandler arduinoOtaEventHandler;
 
-    void epochTimerIsr();
+    static Private* instance;
+    static void epochTimerIsr();
     void setupArduinoOta();
 
     void setupSerialPort();
@@ -139,6 +127,8 @@ struct CoreApplication::Private
     void setupFileSystem();
     void setupRtcDigitalTrimming();
 };
+
+CoreApplication::Private* CoreApplication::Private::instance = nullptr;
 
 CoreApplication::CoreApplication(const ApplicationConfig& appConfig)
     : _p(new Private(appConfig))
@@ -212,7 +202,9 @@ void CoreApplication::setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler
 
 void ICACHE_RAM_ATTR CoreApplication::Private::epochTimerIsr()
 {
-    systemClock.timerIsr();
+    if (instance) {
+        instance->systemClock.timerIsr();
+    }
 }
 
 void CoreApplication::Private::setupArduinoOta()
@@ -311,7 +303,7 @@ void CoreApplication::Private::setupEpochTimer()
     log.info("Setting up Timer1 as epoch timer");
 
     timer1_isr_init();
-    timer1_attachInterrupt(Detail::timer1Isr);
+    timer1_attachInterrupt(CoreApplication::Private::epochTimerIsr);
     timer1_enable(TIM_DIV256, TIM_EDGE, TIM_LOOP);
     timer1_write(100);
 }
