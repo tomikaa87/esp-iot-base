@@ -64,5 +64,7 @@ private:
     };
 
     Header _header;
+    uint16_t _lastHeaderChecksum = 0;
+    bool _firstSave = true;
     std::vector<SettingMetaData> _settings;
 };

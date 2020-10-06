@@ -73,6 +73,8 @@ bool SettingsHandler::load()
 
     const auto checksum = hdrCksum.result();
 
+    _lastHeaderChecksum = checksum;
+
     if (checksum != _header.checksum) {
         // log error
 
@@ -100,6 +102,13 @@ bool SettingsHandler::save()
     }
 
     const auto checksum = hdrCksum.result();
+
+    if (!_firstSave && _lastHeaderChecksum == checksum) {
+        return true;
+    }
+
+    _firstSave = false;
+    _lastHeaderChecksum = checksum;
 
     // Update the header
     _header.checksum = checksum;
