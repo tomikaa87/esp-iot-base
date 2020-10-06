@@ -76,8 +76,17 @@ void Logger::Private::sendToSyslogServer(
     const auto t = systemClock.utcTime();
     const auto tm = gmtime(&t);
 
+    static const auto versionInfo = [this] {
+        std::string s{ "?.?.?" };
+        if (_p) {
+            s = "FW:" + _p->appConfig.firmwareVersion.toString()
+                + "/App:" + _p->appConfig.applicationVersion.toString();
+        }
+        return s;
+    }();
+
     StreamString payload;
-    payload.printf("<191>1 %04u-%02u-%02uT%02u:%02u:%02uZ %s v%s %s %s - %s",
+    payload.printf("<191>1 %04u-%02u-%02uT%02u:%02u:%02uZ %s (%s) %s %s - %s",
         tm->tm_year + 1900,
         tm->tm_mon + 1,
         tm->tm_mday,
@@ -85,7 +94,7 @@ void Logger::Private::sendToSyslogServer(
         tm->tm_min,
         tm->tm_sec,
         hostName,
-        _p ? _p->appConfig.firmwareVersion.toString().c_str() : "?.?.?",
+        versionInfo.c_str(),
         procId,
         msgid,
         message
