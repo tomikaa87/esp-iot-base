@@ -26,6 +26,7 @@
 SettingsHandler::SettingsHandler(ISettingsPersistence& persistence)
     : _persistence(persistence)
     , _nextAddress(sizeof(Header))
+    , _saveTimer(millis())
 {
 }
 
@@ -68,12 +69,11 @@ bool SettingsHandler::load()
             // log error
             continue;
         }
+        s.checksum = Hash::Fletcher16::calculate(s.ptr, s.size);
         hdrCksum.data(reinterpret_cast<uint8_t*>(&s.checksum), sizeof(s.checksum));
     }
 
     const auto checksum = hdrCksum.result();
-
-    _lastHeaderChecksum = checksum;
 
     if (checksum != _header.checksum) {
         // log error
@@ -89,32 +89,29 @@ bool SettingsHandler::load()
 bool SettingsHandler::save()
 {
     Hash::Fletcher16 hdrCksum;
+    auto dataChanged = false;
 
     for (auto& s : _settings) {
         const auto checksum = Hash::Fletcher16::calculate(s.ptr, s.size);
+        hdrCksum.data(reinterpret_cast<const uint8_t*>(&checksum), sizeof(checksum));
         if (s.checksum != checksum) {
             s.checksum = checksum;
-            hdrCksum.data(reinterpret_cast<uint8_t*>(&s.checksum), sizeof(s.checksum));
+            dataChanged = true;
             if (!_persistence.write(s.address, s.ptr, s.size)) {
                 return false;
             }
         }
     }
 
-    const auto checksum = hdrCksum.result();
+    if (dataChanged) {
+        const auto checksum = hdrCksum.result();
 
-    if (!_firstSave && _lastHeaderChecksum == checksum) {
-        return true;
-    }
-
-    _firstSave = false;
-    _lastHeaderChecksum = checksum;
-
-    // Update the header
-    _header.checksum = checksum;
-    if (!_persistence.write(0, reinterpret_cast<uint8_t*>(&_header), sizeof(Header))) {
-        // log error
-        return false;
+        // Update the header
+        _header.checksum = checksum;
+        if (!_persistence.write(0, reinterpret_cast<uint8_t*>(&_header), sizeof(Header))) {
+            // log error
+            return false;
+        }
     }
 
     return true;
