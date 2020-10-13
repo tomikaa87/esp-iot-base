@@ -323,9 +323,9 @@ BlynkHandler::BlynkHandler(const ApplicationConfig& appConfig)
     Blynk.config(
         _appConfig.blynk.appToken,
         _appConfig.blynk.serverHostName,
-        _appConfig.blynk.serverPort,
+        _appConfig.blynk.serverPort
 #ifdef IOT_BLYNK_USE_SSL
-        _appConfig.blynk.sslFingerprint
+        , _appConfig.blynk.sslFingerprint
 #endif
     );
 
