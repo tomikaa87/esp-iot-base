@@ -30,6 +30,7 @@ struct ApplicationConfig
     {
         const char* appToken = "";
         const char* serverHostName = "blynk-cloud.com";
+        const char* sslFingerprint = "";
         uint16_t serverPort = 80;
         uint32_t updateIntervalMs = 1000;
     };

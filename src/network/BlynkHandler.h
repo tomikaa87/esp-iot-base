@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with esp-iot-base.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     Author: Tamas Karpati
     Created on 2017-01-12
 */
@@ -24,10 +24,10 @@
 #include "IBlynkHandler.h"
 #include "Logger.h"
 
-#include <Blynk/BlynkParam.h>
-
 #include <functional>
 #include <map>
+
+class BlynkParam;
 
 class BlynkHandler : public IBlynkHandler
 {

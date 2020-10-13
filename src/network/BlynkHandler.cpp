@@ -20,13 +20,11 @@
 
 #include "BlynkHandler.h"
 
-#define ENABLE_DEBUG
-
-#ifdef ENABLE_DEBUG
-#define BLYNK_PRINT     Serial
-#endif // ENABLE_DEBUG
-
+#ifdef IOT_BLYNK_USE_SSL
+#include <BlynkSimpleEsp8266_SSL.h>
+#else
 #include <BlynkSimpleEsp8266.h>
+#endif
 
 static BlynkHandler* g_blynkHandler = nullptr;
 
@@ -325,7 +323,10 @@ BlynkHandler::BlynkHandler(const ApplicationConfig& appConfig)
     Blynk.config(
         _appConfig.blynk.appToken,
         _appConfig.blynk.serverHostName,
-        _appConfig.blynk.serverPort
+        _appConfig.blynk.serverPort,
+#ifdef IOT_BLYNK_USE_SSL
+        _appConfig.blynk.sslFingerprint
+#endif
     );
 
     g_blynkHandler = this;
