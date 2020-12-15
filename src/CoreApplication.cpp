@@ -144,10 +144,14 @@ void CoreApplication::task()
     _p->ntpClient.task();
 #endif
     _p->otaUpdater.task();
-    _p->blynk.task();
 #ifdef IOT_ENABLE_PERSISTENCE
     _p->settings.task();
 #endif
+
+    // Blynk library tends to freeze if there is no WiFi connection
+    if (WiFi.isConnected()) {
+        _p->blynk.task();
+    }
 
     ArduinoOTA.handle();
 
