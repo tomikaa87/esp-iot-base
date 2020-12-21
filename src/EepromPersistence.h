@@ -15,20 +15,30 @@
     along with esp-iot-base.  If not, see <http://www.gnu.org/licenses/>.
 
     Author: Tamas Karpati
-    Created on 2020-08-09
+    Created on 2020-12-21
 */
 
 #pragma once
 
-#include <cstdint>
-#include <cstdlib>
+#if defined(IOT_ENABLE_PERSISTENCE) && defined(IOT_PERSISTENCE_USE_EEPROM)
 
-class ISettingsPersistence
+#include "ISettingsPersistence.h"
+#include "Logger.h"
+
+class EepromPersistence : public ISettingsPersistence
 {
 public:
-    virtual ~ISettingsPersistence() = default;
+    explicit EepromPersistence(int baseAddress, int size);
+    ~EepromPersistence();
 
-    virtual bool allocate(int address, size_t size) = 0;
-    virtual bool write(int address, const uint8_t* data, size_t size) = 0;
-    virtual bool read(int address, uint8_t* data, size_t size) = 0;
+    bool allocate(int address, size_t size) override;
+    bool write(int address, const uint8_t* data, size_t size) override;
+    bool read(int address, uint8_t* data, size_t size) override;
+
+private:
+    Logger _log{ "EEPROM" };
+    const int _baseAddress = 0;
+    const int _size = 0;
 };
+
+#endif // defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_EEPROM_PERSISTENCE)

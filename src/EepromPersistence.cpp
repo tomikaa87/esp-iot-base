@@ -15,23 +15,30 @@
     along with esp-iot-base.  If not, see <http://www.gnu.org/licenses/>.
 
     Author: Tamas Karpati
-    Created on 2020-08-09
+    Created on 2020-12-21
 */
 
-#include "EeramPersistence.h"
+#include "EepromPersistence.h"
 
-#if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EERAM)
+#if defined(IOT_ENABLE_PERSISTENCE) && defined(IOT_PERSISTENCE_USE_EEPROM)
 
-#include "drivers/EERAM.h"
+#include <EEPROM.h>
 
-EeramPersistence::EeramPersistence(const int baseAddress, const int size)
+EepromPersistence::EepromPersistence(const int baseAddress, const int size)
     : _baseAddress{ baseAddress }
     , _size{ size }
 {
     _log.debug("creating: baseAddress=%d, size=%d", _baseAddress, size);
+
+    EEPROM.begin(_size);
 }
 
-bool EeramPersistence::allocate(int address, size_t size)
+EepromPersistence::~EepromPersistence()
+{
+    EEPROM.end();
+}
+
+bool EepromPersistence::allocate(int address, size_t size)
 {
     _log.debug("allocating: address=%d, size=%u", address, size);
 
@@ -43,7 +50,7 @@ bool EeramPersistence::allocate(int address, size_t size)
     return true;
 }
 
-bool EeramPersistence::write(int address, const uint8_t* data, size_t size)
+bool EepromPersistence::write(int address, const uint8_t* data, size_t size)
 {
     _log.debug("writing: address=%d, size=%u, data=%p", address, size, data);
 
@@ -52,21 +59,17 @@ bool EeramPersistence::write(int address, const uint8_t* data, size_t size)
         return false;
     }
 
-    const auto ok = Drivers::EERAM::write(_baseAddress + address, data, size);
-    if (!ok) {
-        _log.error("write failed, communication error");
-        return false;
-    }
+    memcpy(EEPROM.getDataPtr() + _baseAddress + address, data, size);
 
-    if (!Drivers::EERAM::getStatus().ase) {
-        _log.debug("enabling ASE");
-        Drivers::EERAM::setAseEnabled(true);
+    if (!EEPROM.commit()) {
+        _log.error("commit failed");
+        return false;
     }
 
     return true;
 }
 
-bool EeramPersistence::read(int address, uint8_t* data, size_t size)
+bool EepromPersistence::read(int address, uint8_t* data, size_t size)
 {
     _log.debug("reading: address=%d, size=%u, data=%p", address, size, data);
 
@@ -75,13 +78,9 @@ bool EeramPersistence::read(int address, uint8_t* data, size_t size)
         return false;
     }
 
-    const auto ok = Drivers::EERAM::read(_baseAddress + address, data, size);
-    if (!ok) {
-        _log.error("read failed, communication error");
-        return false;
-    }
+    memcpy(data, EEPROM.getConstDataPtr() + _baseAddress + address, size);
 
     return true;
 }
 
-#endif // defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EERAM)
+#endif // defined(IOT_ENABLE_PERSISTENCE) && defined(IOT_PERSISTENCE_USE_EEPROM)

@@ -24,8 +24,12 @@
 #include "SettingsHandler.h"
 #include "SystemClock.h"
 
-#ifdef IOT_PERSISTENCE_USE_EERAM
+#if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EERAM)
 #include "EeramPersistence.h"
+#endif
+
+#if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EEPROM)
+#include "EepromPersistence.h"
 #endif
 
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
@@ -52,7 +56,10 @@ struct CoreApplication::Private
         , blynk(appConfig)
         , otaUpdater(appConfig, systemClock)
 #ifdef IOT_ENABLE_PERSISTENCE
-        , settingsPersistence(0)
+        , settingsPersistence(
+            appConfig.persistence.BaseAddress,
+            appConfig.persistence.Size
+        )
         , settings(settingsPersistence)
 #endif
     {
@@ -100,6 +107,9 @@ struct CoreApplication::Private
     OtaUpdater otaUpdater;
 #ifdef IOT_PERSISTENCE_USE_EERAM
     EeramPersistence settingsPersistence;
+#endif
+#ifdef IOT_PERSISTENCE_USE_EEPROM
+    EepromPersistence settingsPersistence;
 #endif
 #ifdef IOT_ENABLE_PERSISTENCE
     SettingsHandler settings;

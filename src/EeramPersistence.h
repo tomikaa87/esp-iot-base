@@ -20,7 +20,7 @@
 
 #pragma once
 
-#ifdef IOT_ENABLE_PERSISTENCE
+#if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EERAM)
 
 #include "ISettingsPersistence.h"
 #include "Logger.h"
@@ -28,7 +28,7 @@
 class EeramPersistence : public ISettingsPersistence
 {
 public:
-    explicit EeramPersistence(int baseAddress = 0);
+    explicit EeramPersistence(int baseAddress, int size);
 
     bool allocate(int address, size_t size) override;
     bool write(int address, const uint8_t* data, size_t size) override;
@@ -37,6 +37,7 @@ public:
 private:
     Logger _log{ "EERAM" };
     const int _baseAddress = 0;
+    const int _size = 0;
 };
 
-#endif // IOT_ENABLE_PERSISTENCE
+#endif // defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EERAM)

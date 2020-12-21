@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "BaseConfig.h"
 #include "VersionNumber.h"
 
 #include <cstdint>
@@ -55,6 +56,17 @@ struct ApplicationConfig
         const char* updateUrl = "";
     };
 
+    struct Persistence
+    {
+        uint32_t BaseAddress = 0;
+
+#if defined(IOT_PERSISTENCE_USE_EERAM)
+        uint32_t Size = Config::Persistence::EeramSize;
+#else
+        uint32_t Size = 128;
+#endif
+    };
+
     struct Rtc
     {
         bool enableDigitalTrimming = false;
@@ -78,12 +90,13 @@ struct ApplicationConfig
         const char* password = "";
     };
 
-    const VersionNumber applicationVersion{ 1, 1, 4 };
+    const VersionNumber applicationVersion{ 1, 2, 0 };
     VersionNumber firmwareVersion;
 
     Blynk blynk;
     Logging logging;
     OtaUpdate otaUpdate;
+    Persistence persistence;
     Rtc rtc;
     Serial serial;
     WebServer webServer;
