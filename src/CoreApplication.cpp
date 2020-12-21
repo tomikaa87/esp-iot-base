@@ -299,10 +299,11 @@ void CoreApplication::Private::setupWiFiStation()
 {
     log.info("Setting up WiFi station: SSID=%s", appConfig.wifi.ssid);
 
-    WiFi.begin(appConfig.wifi.ssid, appConfig.wifi.password);
+    WiFi.mode(WIFI_STA);
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
     WiFi.setOutputPower(20.5);
+    WiFi.begin(appConfig.wifi.ssid, appConfig.wifi.password);
 }
 
 void CoreApplication::Private::setupEpochTimer()
