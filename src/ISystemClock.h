@@ -29,4 +29,6 @@ public:
 
     virtual std::time_t localTime() const = 0;
     virtual std::time_t utcTime() const = 0;
+
+    virtual bool isSynchronized() const = 0;
 };

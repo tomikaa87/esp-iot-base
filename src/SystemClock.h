@@ -39,6 +39,8 @@ public:
     std::time_t localTime() const override;
     std::time_t utcTime() const override;
 
+    bool isSynchronized() const override;
+
     void setUtcTime(std::time_t t);
 
 private:
@@ -47,6 +49,7 @@ private:
     std::time_t _lastRtcSync = 0;
     bool _ntpSyncing = false;
     bool _rtcSynced = false;
+    bool _synchronized = false;
     int _isrCounter = 0;
     int _localTimeOffsetMinutes = 60;
     int _localTimeDstOffsetMinutes = 60;

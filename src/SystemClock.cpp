@@ -70,11 +70,17 @@ std::time_t SystemClock::utcTime() const
     return _epoch;
 }
 
+bool SystemClock::isSynchronized() const
+{
+    return _synchronized;
+}
+
 void SystemClock::setUtcTime(const std::time_t t)
 {
     _log.info("setting UTC time: %ld", t);
 
     _epoch = t;
+    _synchronized = true;
 
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
     updateRtc();
@@ -126,6 +132,7 @@ void SystemClock::updateFromRtc()
 
     _epoch = mktime(&rtcTm);
     _lastRtcSync = _epoch;
+    _synchronized = true;
 
     _log.info("epoch after updating: %ld", _epoch);
 }
