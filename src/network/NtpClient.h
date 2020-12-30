@@ -42,6 +42,7 @@ public:
     // Software RTC needs more frequent updates to be accurate
     static constexpr auto UpdateInterval = 10 * 60;
 #endif
+    static constexpr auto RetryIntervalSeconds = 30;
     static constexpr auto NtpPacketSize = 48;
     static constexpr auto SeventyYears = 2208988800ul;
     static constexpr auto NtpPort = 123;

@@ -52,8 +52,8 @@ void NtpClient::task()
 
             if (_socket->parsePacket() == 0) {
                 if (elapsed > 1000) {
-                    _log.warning("socket timeout, retrying in 30 seconds");
-                    _lastUpdate = millis(); //_clock.utcTime() - UpdateInterval + 10
+                    _log.warning("socket timeout, retrying in %d second(s)", RetryIntervalSeconds);
+                    _lastUpdate = _systemClock.utcTime() - UpdateInterval + RetryIntervalSeconds;
                     _state = State::Idle;
                     _socket.reset();
                 }
