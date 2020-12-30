@@ -161,7 +161,6 @@ void CoreApplication::task()
     // Blynk library tends to freeze if there is no WiFi connection
     bool blynkTaskSucceeded = false;
     if (WiFi.isConnected()) {
-        _p->blynk.task();
         blynkTaskSucceeded = _p->blynk.task();
     }
 
