@@ -24,6 +24,8 @@
 
 #include <functional>
 
+class TimeInputParam;
+
 class IBlynkHandler
 {
 public:
@@ -31,13 +33,19 @@ public:
     using DisconnectedHandler = std::function<void ()>;
     using PinWrittenHandler = std::function<void (int pin, const Variant& param)>;
     using PinReadHandler = std::function<Variant (int pin)>;
+    using TimeInputPinHandler = std::function<void (int pin, const TimeInputParam& param)>;
+    using SimplePinReadHandler = std::function<void (int pin)>;
 
     virtual void setConnectedHandler(ConnectedHandler&& handler) = 0;
     virtual void setDisconnectedHandler(DisconnectedHandler&& handler) = 0;
     virtual void setPinReadHandler(int pin, PinReadHandler&& handler) = 0;
     virtual void setPinReadHandler(PinReadHandler&& handler) = 0;
+    virtual void setSimplePinReadHandler(int pin, SimplePinReadHandler&& handler) = 0;
     virtual void setPinWrittenHandler(int pin, PinWrittenHandler&& handler) = 0;
     virtual void setPinWrittenHandler(PinWrittenHandler&& handler) = 0;
+
+    virtual void setTimeInputPinHandler(int pin, TimeInputPinHandler&& handler) = 0;
+    virtual void writeTimeRange(int pin, uint32_t startSec, uint32_t stopSec) = 0;
 
     virtual void writePin(int pin, const Variant& value) = 0;
 

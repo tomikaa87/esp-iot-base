@@ -47,8 +47,12 @@ public:
     void setDisconnectedHandler(DisconnectedHandler&& handler) override;
     void setPinReadHandler(int pin, PinReadHandler&& handler) override;
     void setPinReadHandler(PinReadHandler&& handler) override;
+    void setSimplePinReadHandler(int pin, SimplePinReadHandler&& handler) override;
     void setPinWrittenHandler(int pin, PinWrittenHandler&& handler) override;
     void setPinWrittenHandler(PinWrittenHandler&& handler) override;
+
+    void setTimeInputPinHandler(int pin, TimeInputPinHandler&& handler) override;
+    void writeTimeRange(int pin, uint32_t start, uint32_t stopEpoch) override;
 
     void writePin(int pin, const Variant& value) override;
 
@@ -62,9 +66,12 @@ private:
     DisconnectedHandler _disconnectedHandler;
 
     std::map<int, PinReadHandler> _pinReadHandlers;
+    std::map<int, SimplePinReadHandler> _simplePinReadHandlers;
     PinReadHandler _genericPinReadHandler;
     std::map<int, PinWrittenHandler> _pinWrittenHandlers;
     PinWrittenHandler _genericPinWrittenHandler;
+
+    std::map<int, TimeInputPinHandler> _timeInputPinHandlers;
 
     static Variant toVariant(const BlynkParam& param);
     static void writeVariant(int pin, const Variant& value);

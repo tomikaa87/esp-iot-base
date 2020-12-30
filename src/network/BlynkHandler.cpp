@@ -26,6 +26,8 @@
 #include <BlynkSimpleEsp8266.h>
 #endif
 
+#include <WidgetTimeInput.h>
+
 static BlynkHandler* g_blynkHandler = nullptr;
 
 #define HANDLE_BLYNK_WRITE(__PIN) BLYNK_WRITE(__PIN) { \
@@ -362,30 +364,59 @@ void BlynkHandler::onDisconnected()
 
 void BlynkHandler::onVirtualPinWritten(const int pin, const BlynkParam& param)
 {
+    const auto startMicros = micros();
+
     _log.debug("virtual pin written: pin=%d", pin);
 
     if (_genericPinWrittenHandler) {
+        _log.debug("calling generic pin written handler: pin=%d", pin);
         _genericPinWrittenHandler(pin, toVariant(param));
     }
 
-    const auto& handler = _pinWrittenHandlers[pin];
-    if (handler) {
-        handler(pin, toVariant(param));
+    const auto& tiphIt = _timeInputPinHandlers.find(pin);
+    if (tiphIt != std::end(_timeInputPinHandlers)) {
+        _log.debug("calling time input pin handler: pin=%d", pin);
+        TimeInputParam p{ param };
+        tiphIt->second(pin, param);
     }
+
+    const auto& pwhIt = _pinWrittenHandlers.find(pin);
+    if (pwhIt != std::end(_pinWrittenHandlers)) {
+        _log.debug("calling specific pin handler: pin=%d", pin);
+        pwhIt->second(pin, toVariant(param));
+    }
+
+    const auto elapsedMicros = micros() - startMicros;
+
+    _log.debug("virtual pin write handling took %d us: pin=%d", elapsedMicros, pin);
 }
 
 void BlynkHandler::onVirtualPinRead(const int pin)
 {
+    const auto startMicros = micros();
+
     _log.debug("virtual pin read: pin=%d", pin);
 
     if (_genericPinReadHandler) {
+        _log.debug("calling generic pin read handler: pin=%d", pin);
         writeVariant(pin, _genericPinReadHandler(pin));
     }
 
-    const auto& handler = _pinReadHandlers[pin];
-    if (handler) {
-        writeVariant(pin, handler(pin));
+    const auto& prhIt = _pinReadHandlers.find(pin);
+    if (prhIt != std::end(_pinReadHandlers)) {
+        _log.debug("calling specific pin read handler: pin=%d", pin);
+        writeVariant(pin, prhIt->second(pin));
     }
+
+    const auto& sprhIt = _simplePinReadHandlers.find(pin);
+    if (sprhIt != std::end(_simplePinReadHandlers)) {
+        _log.debug("calling simple pin read handler: pin=%d", pin);
+        sprhIt->second(pin);
+    }
+
+    const auto elapsedMicros = micros() - startMicros;
+
+    _log.debug("virtual pin read handling took %d us: pin=%d", elapsedMicros, pin);
 }
 
 void BlynkHandler::setConnectedHandler(ConnectedHandler&& handler)
@@ -408,6 +439,11 @@ void BlynkHandler::setPinReadHandler(PinReadHandler&& handler)
     _genericPinReadHandler = std::move(handler);
 }
 
+void BlynkHandler::setSimplePinReadHandler(const int pin, SimplePinReadHandler&& handler)
+{
+    _simplePinReadHandlers[pin] = std::move(handler);
+}
+
 void BlynkHandler::setPinWrittenHandler(const int pin, PinWrittenHandler&& handler)
 {
     _pinWrittenHandlers[pin] = std::move(handler);
@@ -416,6 +452,16 @@ void BlynkHandler::setPinWrittenHandler(const int pin, PinWrittenHandler&& handl
 void BlynkHandler::setPinWrittenHandler(PinWrittenHandler&& handler)
 {
     _genericPinWrittenHandler = std::move(handler);
+}
+
+void BlynkHandler::setTimeInputPinHandler(const int pin, TimeInputPinHandler&& handler)
+{
+    _timeInputPinHandlers[pin] = std::move(handler);
+}
+
+void BlynkHandler::writeTimeRange(const int pin, const uint32_t start, const uint32_t stop)
+{
+    Blynk.virtualWrite(pin, start, stop);
 }
 
 void BlynkHandler::writePin(int pin, const Variant& value)
