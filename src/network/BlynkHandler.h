@@ -35,7 +35,7 @@ public:
     BlynkHandler(const ApplicationConfig& appConfig);
     ~BlynkHandler();
 
-    void task();
+    bool task();
 
     // Internal handlers for Blynk events
     void onConnected();

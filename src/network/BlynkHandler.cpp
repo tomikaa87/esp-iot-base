@@ -337,9 +337,9 @@ BlynkHandler::~BlynkHandler()
     g_blynkHandler = nullptr;
 }
 
-void BlynkHandler::task()
+bool BlynkHandler::task()
 {
-    Blynk.run();
+    return Blynk.run();
 }
 
 void BlynkHandler::onConnected()
