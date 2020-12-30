@@ -20,7 +20,9 @@
 
 #pragma once
 
-#if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EERAM)
+#include "BaseConfig.h"
+
+#if defined(IOT_ENABLE_PERSISTENCE) && defined(IOT_PERSISTENCE_USE_EERAM)
 
 #include "ISettingsPersistence.h"
 #include "Logger.h"
