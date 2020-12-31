@@ -41,6 +41,7 @@
 #include "network/BlynkHandler.h"
 #include "network/NtpClient.h"
 #include "network/OtaUpdater.h"
+#include "network/WiFiWatchdog.h"
 
 #include <Arduino.h>
 #include <ArduinoOTA.h>
@@ -115,6 +116,8 @@ struct CoreApplication::Private
     SettingsHandler settings;
 #endif
 
+    WiFiWatchdog wifiWatchdog;
+
     bool updateChecked = false;
     uint32_t updateCheckTimer = 0;
 
@@ -149,6 +152,8 @@ CoreApplication::~CoreApplication() = default;
 
 void CoreApplication::task()
 {
+    _p->wifiWatchdog.task();
+
 #ifdef IOT_ENABLE_SYSTEM_CLOCK
     _p->systemClock.task();
     _p->ntpClient.task();
@@ -160,7 +165,7 @@ void CoreApplication::task()
 
     // Blynk library tends to freeze if there is no WiFi connection
     bool blynkTaskSucceeded = false;
-    if (WiFi.isConnected()) {
+    if (_p->wifiWatchdog.isConnected()) {
         blynkTaskSucceeded = _p->blynk.task();
     }
 
@@ -170,7 +175,7 @@ void CoreApplication::task()
     if (_p->lastSlowLoopUpdate == 0 || millis() - _p->lastSlowLoopUpdate >= Private::SlowLoopUpdateIntervalMs) {
         _p->lastSlowLoopUpdate = millis();
 
-        if (!_p->updateChecked && WiFi.isConnected() && millis() - _p->updateCheckTimer >= 5000) {
+        if (!_p->updateChecked && _p->wifiWatchdog.isConnected() && millis() - _p->updateCheckTimer >= 5000) {
             _p->updateChecked = true;
             _p->otaUpdater.forceUpdate();
         }
