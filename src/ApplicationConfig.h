@@ -54,6 +54,7 @@ struct ApplicationConfig
         uint16_t arduinoOtaPort = 8266;
         uint32_t updateCheckIntervalMs = 5000;
         const char* updateUrl = "";
+        const char* arduinoOtaPasswordHash = nullptr;
     };
 
     struct Persistence
@@ -90,7 +91,7 @@ struct ApplicationConfig
         const char* password = "";
     };
 
-    const VersionNumber applicationVersion{ 1, 2, 2 };
+    const VersionNumber applicationVersion{ 1, 2, 3 };
     VersionNumber firmwareVersion;
 
     Blynk blynk;

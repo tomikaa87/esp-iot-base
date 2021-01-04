@@ -248,6 +248,12 @@ void ICACHE_RAM_ATTR CoreApplication::Private::epochTimerIsr()
 
 void CoreApplication::Private::setupArduinoOta()
 {
+    if (appConfig.otaUpdate.arduinoOtaPasswordHash) {
+        ArduinoOTA.setPasswordHash(appConfig.otaUpdate.arduinoOtaPasswordHash);
+    } else {
+        log.warning("no password hash set for Arduino OTA");
+    }
+
     ArduinoOTA.onStart([this] {
         auto type = "";
         if (ArduinoOTA.getCommand() == U_FLASH) {
