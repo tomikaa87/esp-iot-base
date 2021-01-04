@@ -100,10 +100,8 @@ struct CoreApplication::Private
 
     Logger log{ "CoreApplication" };
     const ApplicationConfig& appConfig;
-#ifdef IOT_ENABLE_SYSTEM_CLOCK
     SystemClock systemClock;
     NtpClient ntpClient;
-#endif
     BlynkHandler blynk;
     OtaUpdater otaUpdater;
 #ifdef IOT_PERSISTENCE_USE_EERAM
@@ -154,10 +152,9 @@ void CoreApplication::task()
 {
     _p->wifiWatchdog.task();
 
-#ifdef IOT_ENABLE_SYSTEM_CLOCK
     _p->systemClock.task();
     _p->ntpClient.task();
-#endif
+
     _p->otaUpdater.task();
 #ifdef IOT_ENABLE_PERSISTENCE
     _p->settings.task();
@@ -222,12 +219,10 @@ ISettingsHandler& CoreApplication::settings()
 }
 #endif
 
-#ifdef IOT_ENABLE_SYSTEM_CLOCK
 ISystemClock& CoreApplication::systemClock()
 {
     return _p->systemClock;
 }
-#endif
 
 void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
 {
