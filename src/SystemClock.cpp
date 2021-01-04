@@ -171,6 +171,8 @@ void SystemClock::updateRtc()
     );
 }
 
+#endif // IOT_SYSTEM_CLOCK_HW_RTC
+
 void SystemClock::sychronizeCLibClock()
 {
     _log.info("synchronizing clock of C Runtime Library");
@@ -187,8 +189,6 @@ void SystemClock::sychronizeCLibClock()
 
     _log.debug("result of time(): %ld", time(nullptr));
 }
-
-#endif // IOT_SYSTEM_CLOCK_HW_RTC
 
 bool SystemClock::isDst(const std::time_t t)
 {
