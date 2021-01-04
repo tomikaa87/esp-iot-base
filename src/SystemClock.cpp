@@ -27,6 +27,8 @@ using rtc = Drivers::MCP7940N;
 
 #endif // IOT_SYSTEM_CLOCK_HW_RTC
 
+#include <coredecls.h>
+
 SystemClock::SystemClock()
 {
     _log.info("initializing");
@@ -85,6 +87,8 @@ void SystemClock::setUtcTime(const std::time_t t)
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
     updateRtc();
 #endif
+
+    sychronizeCLibClock();
 }
 
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
@@ -135,6 +139,8 @@ void SystemClock::updateFromRtc()
     _synchronized = true;
 
     _log.info("epoch after updating: %ld", _epoch);
+
+    sychronizeCLibClock();
 }
 
 void SystemClock::updateRtc()
@@ -163,6 +169,23 @@ void SystemClock::updateRtc()
         tm->tm_min,
         tm->tm_sec
     );
+}
+
+void SystemClock::sychronizeCLibClock()
+{
+    _log.info("synchronizing clock of C Runtime Library");
+
+    timeval tv;
+    tv.tv_sec = _epoch;
+    tv.tv_usec = 0;
+
+    const auto result = settimeofday(&tv, nullptr);
+
+    if (result != 0) {
+        _log.warning("call to settimeofday() failed: result=%d", result);
+    }
+
+    _log.debug("result of time(): %ld", time(nullptr));
 }
 
 #endif // IOT_SYSTEM_CLOCK_HW_RTC

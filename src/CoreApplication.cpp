@@ -163,10 +163,29 @@ void CoreApplication::task()
     _p->settings.task();
 #endif
 
-    // Blynk library tends to freeze if there is no WiFi connection
+    // Blynk library tends to freeze if there is no WiFi connection.
+    // This is caused by an infinite loop in an connect() call in
+    // Blynk.run() if the NTP server is unreachable.
     bool blynkTaskSucceeded = false;
+    bool blynkTaskCanRun = false;
     if (_p->wifiWatchdog.isConnected()) {
-        blynkTaskSucceeded = _p->blynk.task();
+        // Check if system time is set before letting Blynk try to connect
+        if (_p->blynk.isConnected()) {
+            blynkTaskCanRun = true;
+        } else {
+            // There is a check in connect() which checks if current time
+            // is less than 100000
+            if (time(nullptr) >= 100000) {
+                blynkTaskCanRun = true;
+            } else {
+                // Time must be synchronized first. NtpClient and SystemClock
+                // will do that automatically if possible
+            }
+        }
+
+        if (blynkTaskCanRun) {
+            blynkTaskSucceeded = _p->blynk.task();
+        }
     }
 
     ArduinoOTA.handle();

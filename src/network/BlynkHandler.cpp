@@ -344,6 +344,11 @@ bool BlynkHandler::task()
     return Blynk.run();
 }
 
+bool BlynkHandler::isConnected() const
+{
+    return Blynk.connected();
+}
+
 void BlynkHandler::onConnected()
 {
     _log.debug("connected");

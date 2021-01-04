@@ -37,6 +37,8 @@ public:
 
     bool task();
 
+    bool isConnected() const;
+
     // Internal handlers for Blynk events
     void onConnected();
     void onDisconnected();

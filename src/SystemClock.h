@@ -60,5 +60,7 @@ private:
     void updateRtc();
 #endif
 
+    void sychronizeCLibClock();
+
     static bool isDst(std::time_t t);
 };
