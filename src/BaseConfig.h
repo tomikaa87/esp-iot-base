@@ -34,9 +34,9 @@ namespace Config
 #elif defined(IOT_PERSISTENCE_EERAM_47L04)
         static constexpr auto EeramSize = 4096u;
 #endif
-// SPIFFS -->
-#elif defined(IOT_PERSISTENCE_SPIFFS)
-#define IOT_PERSISTENCE_USE_SPIFFS
+// FS -->
+#elif defined(IOT_PERSISTENCE_FS)
+#define IOT_PERSISTENCE_USE_FS
         static constexpr auto SettingsFileName = "settings.bin";
 #endif
     }

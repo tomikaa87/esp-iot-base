@@ -45,7 +45,7 @@
 
 #include <Arduino.h>
 #include <ArduinoOTA.h>
-#include <FS.h>
+#include <LittleFS.h>
 
 struct CoreApplication::Private
 {
@@ -356,7 +356,7 @@ void CoreApplication::Private::setupFileSystem()
 {
     log.info("Setting up file system");
 
-    SPIFFS.begin();
+    LittleFS.begin();
 }
 
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC

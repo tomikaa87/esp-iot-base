@@ -7,7 +7,7 @@ The plan is to support the following features:
 
 * Easily extensible for custom applications
 * Update the firmware with OTA
-* Flash/SPIFFS programming via ArduinoOTA
+* Flash/LittleFS programming via ArduinoOTA
 * Software and hardware-based RTC (MCP7940N) with NTP update
 * Persistent settings storage using Microchip 47L(04/16)
 * Blynk integration

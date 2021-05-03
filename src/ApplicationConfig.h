@@ -91,7 +91,7 @@ struct ApplicationConfig
         const char* password = "";
     };
 
-    const VersionNumber applicationVersion{ 1, 2, 4 };
+    const VersionNumber applicationVersion{ 1, 3, 0 };
     VersionNumber firmwareVersion;
 
     Blynk blynk;
