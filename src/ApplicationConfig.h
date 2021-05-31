@@ -91,7 +91,7 @@ struct ApplicationConfig
         const char* password = "";
     };
 
-    const VersionNumber applicationVersion{ 1, 3, 0 };
+    const VersionNumber applicationVersion{ 1, 3, 1 };
     VersionNumber firmwareVersion;
 
     Blynk blynk;
@@ -102,4 +102,6 @@ struct ApplicationConfig
     Serial serial;
     WebServer webServer;
     WiFi wifi;
+
+    const char* hostName = "";
 };

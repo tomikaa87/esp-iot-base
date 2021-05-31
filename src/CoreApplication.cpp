@@ -339,6 +339,9 @@ void CoreApplication::Private::setupWiFiStation()
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
     WiFi.setOutputPower(20.5);
+    if (appConfig.hostName != nullptr && strlen(appConfig.hostName) > 0) {
+        wifi_station_set_hostname(appConfig.hostName);
+    }
     WiFi.begin(appConfig.wifi.ssid, appConfig.wifi.password);
 }
 
