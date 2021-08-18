@@ -244,7 +244,7 @@ void CoreApplication::setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler
     _p->arduinoOtaEventHandler = std::move(handler);
 }
 
-void ICACHE_RAM_ATTR CoreApplication::Private::epochTimerIsr()
+void IRAM_ATTR CoreApplication::Private::epochTimerIsr()
 {
     if (instance) {
         instance->systemClock.timerIsr();
