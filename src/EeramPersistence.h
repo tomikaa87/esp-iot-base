@@ -30,16 +30,16 @@
 class EeramPersistence : public ISettingsPersistence
 {
 public:
-    explicit EeramPersistence(int baseAddress, int size);
+    explicit EeramPersistence(uint32_t baseAddress, size_t size);
 
-    bool allocate(int address, size_t size) override;
-    bool write(int address, const uint8_t* data, size_t size) override;
-    bool read(int address, uint8_t* data, size_t size) override;
+    bool allocate(uint32_t address, size_t size) override;
+    bool write(uint32_t address, const uint8_t* data, size_t size) override;
+    bool read(uint32_t address, uint8_t* data, size_t size) override;
 
 private:
     Logger _log{ "EERAM" };
-    const int _baseAddress = 0;
-    const int _size = 0;
+    const uint32_t _baseAddress = 0;
+    const size_t _size = 0;
 };
 
 #endif // defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EERAM)

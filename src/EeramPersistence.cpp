@@ -24,16 +24,16 @@
 
 #include "drivers/EERAM.h"
 
-EeramPersistence::EeramPersistence(const int baseAddress, const int size)
+EeramPersistence::EeramPersistence(const uint32_t baseAddress, const size_t size)
     : _baseAddress{ baseAddress }
     , _size{ size }
 {
-    _log.debug("creating: baseAddress=%d, size=%d", _baseAddress, size);
+    _log.debug("creating: baseAddress=%u, size=%u", _baseAddress, size);
 }
 
-bool EeramPersistence::allocate(int address, size_t size)
+bool EeramPersistence::allocate(const uint32_t address, size_t size)
 {
-    _log.debug("allocating: address=%d, size=%u", address, size);
+    _log.debug("allocating: address=%u, size=%u", address, size);
 
     if (_baseAddress < 0 || address < 0 || _baseAddress + address + size >= _size) {
         _log.error("allocation failed, address or size too large");
@@ -43,9 +43,9 @@ bool EeramPersistence::allocate(int address, size_t size)
     return true;
 }
 
-bool EeramPersistence::write(int address, const uint8_t* data, size_t size)
+bool EeramPersistence::write(const uint32_t address, const uint8_t* data, const size_t size)
 {
-    _log.debug("writing: address=%d, size=%u, data=%p", address, size, data);
+    _log.debug("writing: address=%u, size=%u, data=%p", address, size, data);
 
     if (_baseAddress < 0 || address < 0 || _baseAddress + address + size >= _size) {
         _log.error("write failed, address or size too large");
@@ -66,9 +66,9 @@ bool EeramPersistence::write(int address, const uint8_t* data, size_t size)
     return true;
 }
 
-bool EeramPersistence::read(int address, uint8_t* data, size_t size)
+bool EeramPersistence::read(const uint32_t address, uint8_t* data, const size_t size)
 {
-    _log.debug("reading: address=%d, size=%u, data=%p", address, size, data);
+    _log.debug("reading: address=%u, size=%u, data=%p", address, size, data);
 
     if (_baseAddress < 0 || address < 0 || _baseAddress + address + size >= _size) {
         _log.error("write failed, address or size too large");

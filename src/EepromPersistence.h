@@ -28,17 +28,17 @@
 class EepromPersistence : public ISettingsPersistence
 {
 public:
-    explicit EepromPersistence(int baseAddress, int size);
+    explicit EepromPersistence(uint32_t baseAddress, size_t size);
     ~EepromPersistence();
 
-    bool allocate(int address, size_t size) override;
-    bool write(int address, const uint8_t* data, size_t size) override;
-    bool read(int address, uint8_t* data, size_t size) override;
+    bool allocate(uint32_t address, size_t size) override;
+    bool write(uint32_t address, const uint8_t* data, size_t size) override;
+    bool read(uint32_t address, uint8_t* data, size_t size) override;
 
 private:
     Logger _log{ "EEPROM" };
-    const int _baseAddress = 0;
-    const int _size = 0;
+    const uint32_t _baseAddress = 0;
+    const size_t _size = 0;
 };
 
 #endif // defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_EEPROM_PERSISTENCE)

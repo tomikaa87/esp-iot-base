@@ -476,7 +476,11 @@ void BlynkHandler::writePin(int pin, const Variant& value)
 
 void BlynkHandler::writeTerminal(const int pin, const char* text)
 {
-    WidgetTerminal terminal{ pin };
+    if (pin > 255 || pin < 0) {
+        return;
+    }
+
+    WidgetTerminal terminal{ static_cast<uint8_t>(pin) };
     terminal.println(text);
     terminal.flush();
 }

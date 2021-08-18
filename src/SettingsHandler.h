@@ -48,7 +48,7 @@ public:
 private:
     Logger _log{ "SettingsHandler" };
     ISettingsPersistence& _persistence;
-    int _nextAddress = 0;
+    uint32_t _nextAddress = 0;
     int32_t _saveTimer = 0;
     DefaultsLoader _defaultsLoader;
 
@@ -59,7 +59,7 @@ private:
     struct SettingMetaData {
         uint8_t* ptr;
         size_t size;
-        int address;
+        uint32_t address;
         uint16_t checksum;
     };
 

@@ -77,16 +77,6 @@ bool MCP7940N::isBatteryEnabled()
     return (value & (1 << 3)) > 0;
 }
 
-void MCP7940N::set12HoursEnabled(bool enabled)
-{
-
-}
-
-bool MCP7940N::is12HoursEnabled()
-{
-
-}
-
 void MCP7940N::setDateTime(const DateTime& dt)
 {
     setOscillatorEnabled(false);
@@ -159,16 +149,6 @@ MCP7940N::DateTime MCP7940N::getDateTime()
     return dt;
 }
 
-void MCP7940N::setAlarm(AlarmModule module, const Alarm& alarm)
-{
-
-}
-
-MCP7940N::Alarm MCP7940N::getAlarm(AlarmModule module)
-{
-
-}
-
 void MCP7940N::setOutputConfig(OutputConfig config)
 {
     uint8_t value = read(Register::CONTROL);
@@ -218,36 +198,6 @@ void MCP7940N::setCoarseTrimmingEnabled(bool enabled)
     uint8_t value = read(Register::CONTROL);
     value = enabled ? value | (1 << 2) : value & ~(1 << 2);
     write(Register::CONTROL, value);
-}
-
-MCP7940N::PowerFailTimestamp MCP7940N::getPowerDownTimestamp()
-{
-
-}
-
-MCP7940N::PowerFailTimestamp MCP7940N::getPowerUpTimestamp()
-{
-
-}
-
-bool MCP7940N::writeSram(uint8_t address, uint8_t value)
-{
-
-}
-
-uint8_t MCP7940N::writeSram(uint8_t address, const uint8_t* buffer, uint8_t length)
-{
-
-}
-
-uint8_t MCP7940N::readSram(uint8_t address)
-{
-
-}
-
-uint8_t MCP7940N::readSram(uint8_t address, uint8_t* buffer, uint8_t length)
-{
-
 }
 
 uint8_t MCP7940N::fromBcd(uint8_t value)

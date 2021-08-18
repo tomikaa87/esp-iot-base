@@ -38,7 +38,7 @@ void SettingsHandler::task()
     }
 }
 
-bool SettingsHandler::registerSettingMemory(uint8_t* ptr, size_t size)
+bool SettingsHandler::registerSettingMemory(uint8_t* ptr, const size_t size)
 {
     SettingMetaData smd{};
     smd.ptr = ptr;

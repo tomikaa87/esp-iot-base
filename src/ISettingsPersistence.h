@@ -28,7 +28,7 @@ class ISettingsPersistence
 public:
     virtual ~ISettingsPersistence() = default;
 
-    virtual bool allocate(int address, size_t size) = 0;
-    virtual bool write(int address, const uint8_t* data, size_t size) = 0;
-    virtual bool read(int address, uint8_t* data, size_t size) = 0;
+    virtual bool allocate(uint32_t address, size_t size) = 0;
+    virtual bool write(uint32_t address, const uint8_t* data, size_t size) = 0;
+    virtual bool read(uint32_t address, uint8_t* data, size_t size) = 0;
 };
