@@ -62,5 +62,5 @@ public:
 
 private:
     struct Private;
-    std::unique_ptr<Private> _p;
+    Private* _p = nullptr;
 };

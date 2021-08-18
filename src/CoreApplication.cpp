@@ -69,6 +69,12 @@ struct CoreApplication::Private
         // Serial port
         setupSerialPort();
 
+        printf("Free heap before CA init: %u\n", ESP.getFreeHeap());
+
+        static WiFiClientSecure wcs;
+
+        printf("Free heap after WCS init: %u\n", ESP.getFreeHeap());
+
         // Epoch timer
         setupEpochTimer();
 
@@ -91,6 +97,8 @@ struct CoreApplication::Private
 
         // TODO de-init before SystemClock is destroyed
         Logger::setup(appConfig, systemClock);
+
+        printf("Free heap after CA init: %u\n", ESP.getFreeHeap());
     }
 
     ~Private()
@@ -142,8 +150,10 @@ struct CoreApplication::Private
 CoreApplication::Private* CoreApplication::Private::instance = nullptr;
 
 CoreApplication::CoreApplication(const ApplicationConfig& appConfig)
-    : _p(new Private(appConfig))
 {
+    // FIXME
+    static Private p{ appConfig };
+    _p = &p;
 }
 
 CoreApplication::~CoreApplication() = default;
@@ -159,6 +169,8 @@ void CoreApplication::task()
 #ifdef IOT_ENABLE_PERSISTENCE
     _p->settings.task();
 #endif
+
+    ArduinoOTA.handle();
 
     // Blynk library tends to freeze if there is no WiFi connection.
     // This is caused by an infinite loop in an connect() call in
@@ -184,8 +196,6 @@ void CoreApplication::task()
             blynkTaskSucceeded = _p->blynk.task();
         }
     }
-
-    ArduinoOTA.handle();
 
     // Slow loop
     if (_p->lastSlowLoopUpdate == 0 || millis() - _p->lastSlowLoopUpdate >= Private::SlowLoopUpdateIntervalMs) {
