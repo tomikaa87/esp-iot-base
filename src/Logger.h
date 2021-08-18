@@ -22,6 +22,8 @@
 
 #include "ApplicationConfig.h"
 
+#include "utils/PlacementHelper.h"
+
 #include <string>
 
 #include <Arduino.h>
@@ -60,8 +62,10 @@ public:
             ss.printf(fmt, params...);
         }
 
-        if (_p && _p->appConfig.logging.syslog.enabled) {
-            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
+        PlacementAccessor<Private> pa(_pContainer);
+
+        if (!pa.empty() && pa->appConfig.logging.syslog.enabled) {
+            pa->sendToSyslogServer(pa->appConfig.logging.syslog.hostName, ss.c_str());
         }
 
         // Print new line after sending the message to Syslog server
@@ -129,8 +133,10 @@ public:
 
         Serial.print(ss);
 
-        if (_p && _p->appConfig.logging.syslog.enabled) {
-            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
+        PlacementAccessor<Private> pa(_pContainer);
+
+        if (!pa.empty() && pa->appConfig.logging.syslog.enabled) {
+            pa->sendToSyslogServer(pa->appConfig.logging.syslog.hostName, ss.c_str());
         }
 
         return Block{ _inBlock };
@@ -165,7 +171,7 @@ private:
         );
     };
 
-    static Private* _p;
+    static PlacementContainer<Private> _pContainer;
 
     static char severityIndicator(Severity severity);
 };

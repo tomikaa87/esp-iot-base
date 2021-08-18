@@ -25,15 +25,12 @@
 
 #include <ctime>
 
-Logger::Private* Logger::_p = nullptr;
+PlacementContainer<Logger::Private> Logger::_pContainer;
 
 void Logger::setup(const ApplicationConfig& appConfig, const ISystemClock& systemClock)
 {
-    if (Logger::_p) {
-        delete Logger::_p;
-    }
-
-    Logger::_p = new Logger::Private(appConfig, systemClock);
+    PlacementAccessor<Private> pa(Logger::_pContainer);
+    pa.construct(appConfig, systemClock);
 }
 
 Logger::Logger(std::string category)
@@ -78,9 +75,10 @@ void Logger::Private::sendToSyslogServer(
 
     static const auto versionInfo = [this] {
         std::string s{ "?.?.?" };
-        if (_p) {
-            s = "FW:" + _p->appConfig.firmwareVersion.toString()
-                + "/App:" + _p->appConfig.applicationVersion.toString();
+        PlacementAccessor<Private> pa(_pContainer);
+        if (!pa.empty()) {
+            s = "FW:" + pa->appConfig.firmwareVersion.toString()
+                + "/App:" + pa->appConfig.applicationVersion.toString();
         }
         return s;
     }();

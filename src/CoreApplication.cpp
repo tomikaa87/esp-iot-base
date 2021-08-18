@@ -20,154 +20,77 @@
 
 #include "BaseConfig.h"
 #include "CoreApplication.h"
-#include "Logger.h"
-#include "SettingsHandler.h"
-#include "SystemClock.h"
-
-#if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EERAM)
-#include "EeramPersistence.h"
-#endif
-
-#if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EEPROM)
-#include "EepromPersistence.h"
-#endif
-
-#ifdef IOT_SYSTEM_CLOCK_HW_RTC
-#include "drivers/MCP7940N.h"
-#endif
-
-#include "drivers/SimpleI2C.h"
-
-#include "network/BlynkHandler.h"
-#include "network/NtpClient.h"
-#include "network/OtaUpdater.h"
-#include "network/WiFiWatchdog.h"
 
 #include <Arduino.h>
 #include <ArduinoOTA.h>
 #include <LittleFS.h>
 
-struct CoreApplication::Private
-{
-    Private(
-        const ApplicationConfig& appConfig
-    )
-        : appConfig(appConfig)
-        , ntpClient(systemClock)
-        , blynk(appConfig)
-        , otaUpdater(appConfig, systemClock)
-#ifdef IOT_ENABLE_PERSISTENCE
-        , settingsPersistence(
-            appConfig.persistence.BaseAddress,
-            appConfig.persistence.Size
-        )
-        , settings(settingsPersistence)
-#endif
-    {
-        instance = this;
-
-        // Serial port
-        setupSerialPort();
-
-        printf("Free heap before CA init: %u\n", ESP.getFreeHeap());
-
-        static WiFiClientSecure wcs;
-
-        printf("Free heap after WCS init: %u\n", ESP.getFreeHeap());
-
-        // Epoch timer
-        setupEpochTimer();
-
-        // WiFI
-        setupWiFiStation();
-
-        // File system
-        setupFileSystem();
-
-        // I2C bus
-        Drivers::I2C::init();
-
-        // RTC
-#ifdef IOT_SYSTEM_CLOCK_HW_RTC
-        setupRtcDigitalTrimming();
-#endif
-
-        // Arduino OTA
-        setupArduinoOta();
-
-        // TODO de-init before SystemClock is destroyed
-        Logger::setup(appConfig, systemClock);
-
-        printf("Free heap after CA init: %u\n", ESP.getFreeHeap());
-    }
-
-    ~Private()
-    {
-        instance = nullptr;
-    }
-
-    Logger log{ "CoreApplication" };
-    const ApplicationConfig& appConfig;
-    SystemClock systemClock;
-    NtpClient ntpClient;
-    BlynkHandler blynk;
-    OtaUpdater otaUpdater;
-#ifdef IOT_PERSISTENCE_USE_EERAM
-    EeramPersistence settingsPersistence;
-#endif
-#ifdef IOT_PERSISTENCE_USE_EEPROM
-    EepromPersistence settingsPersistence;
-#endif
-#ifdef IOT_ENABLE_PERSISTENCE
-    SettingsHandler settings;
-#endif
-
-    WiFiWatchdog wifiWatchdog;
-
-    bool updateChecked = false;
-    uint32_t updateCheckTimer = 0;
-
-    static constexpr auto SlowLoopUpdateIntervalMs = 500;
-    uint32_t lastSlowLoopUpdate = 0;
-
-    static constexpr auto BlynkUpdateIntervalMs = 1000;
-    uint32_t lastBlynkUpdate = 0;
-    BlynkUpdateHandler blynkUpdateHandler;
-
-    ArduinoOtaEventHandler arduinoOtaEventHandler;
-
-    static Private* instance;
-    static void epochTimerIsr();
-    void setupArduinoOta();
-
-    void setupSerialPort();
-    void setupWiFiStation();
-    void setupEpochTimer();
-    void setupFileSystem();
-    void setupRtcDigitalTrimming();
-};
-
-CoreApplication::Private* CoreApplication::Private::instance = nullptr;
+CoreApplication* CoreApplication::instance = nullptr;
 
 CoreApplication::CoreApplication(const ApplicationConfig& appConfig)
+    : _i2cInitialized(
+        [] {
+            // Initialize the hardware before creating the application
+            Drivers::I2C::init();
+            return true;
+        }()
+    )
+    , appConfig(appConfig)
+    , ntpClient(_systemClock)
+    , blynk(appConfig)
+    , otaUpdater(appConfig, _systemClock)
+#ifdef IOT_ENABLE_PERSISTENCE
+    , settingsPersistence(
+        appConfig.persistence.BaseAddress,
+        appConfig.persistence.Size
+    )
+    , _settings(settingsPersistence)
+#endif
 {
-    // FIXME
-    static Private p{ appConfig };
-    _p = &p;
-}
+    // Serial port
+    setupSerialPort();
 
-CoreApplication::~CoreApplication() = default;
+    Serial.printf_P(PSTR("Free heap before CA init: %u\n"), ESP.getFreeHeap());
+
+    static WiFiClientSecure wcs;
+
+    Serial.printf_P(PSTR("Free heap after WCS init: %u\n"), ESP.getFreeHeap());
+
+    // Epoch timer
+    setupEpochTimer();
+
+    // WiFI
+    setupWiFiStation();
+
+    // File system
+    setupFileSystem();
+
+    // RTC
+#ifdef IOT_SYSTEM_CLOCK_HW_RTC
+    setupRtcDigitalTrimming();
+#endif
+
+    // Arduino OTA
+    setupArduinoOta();
+
+    // TODO de-init before SystemClock is destroyed
+    Logger::setup(appConfig, _systemClock);
+
+    Serial.printf_P(PSTR("Free heap after CA init: %u\n"), ESP.getFreeHeap());
+
+    instance = this;
+}
 
 void CoreApplication::task()
 {
-    _p->wifiWatchdog.task();
+    wifiWatchdog.task();
 
-    _p->systemClock.task();
-    _p->ntpClient.task();
+    _systemClock.task();
+    ntpClient.task();
 
-    _p->otaUpdater.task();
+    otaUpdater.task();
 #ifdef IOT_ENABLE_PERSISTENCE
-    _p->settings.task();
+    _settings.task();
 #endif
 
     ArduinoOTA.handle();
@@ -177,9 +100,9 @@ void CoreApplication::task()
     // Blynk.run() if the NTP server is unreachable.
     bool blynkTaskSucceeded = false;
     bool blynkTaskCanRun = false;
-    if (_p->wifiWatchdog.isConnected()) {
+    if (wifiWatchdog.isConnected()) {
         // Check if system time is set before letting Blynk try to connect
-        if (_p->blynk.isConnected()) {
+        if (blynk.isConnected()) {
             blynkTaskCanRun = true;
         } else {
             // There is a check in connect() which checks if current time
@@ -193,65 +116,65 @@ void CoreApplication::task()
         }
 
         if (blynkTaskCanRun) {
-            blynkTaskSucceeded = _p->blynk.task();
+            blynkTaskSucceeded = blynk.task();
         }
     }
 
     // Slow loop
-    if (_p->lastSlowLoopUpdate == 0 || millis() - _p->lastSlowLoopUpdate >= Private::SlowLoopUpdateIntervalMs) {
-        _p->lastSlowLoopUpdate = millis();
+    if (lastSlowLoopUpdate == 0 || millis() - lastSlowLoopUpdate >= SlowLoopUpdateIntervalMs) {
+        lastSlowLoopUpdate = millis();
 
-        if (!_p->updateChecked && _p->wifiWatchdog.isConnected() && millis() - _p->updateCheckTimer >= 5000) {
-            _p->updateChecked = true;
-            _p->otaUpdater.forceUpdate();
+        if (!updateChecked && wifiWatchdog.isConnected() && millis() - updateCheckTimer >= 5000) {
+            updateChecked = true;
+            otaUpdater.forceUpdate();
         }
     }
 
     // Blynk update loop
-    if (_p->lastBlynkUpdate == 0 || millis() - _p->lastBlynkUpdate >= Private::BlynkUpdateIntervalMs) {
-        _p->lastBlynkUpdate = millis();
+    if (lastBlynkUpdate == 0 || millis() - lastBlynkUpdate >= BlynkUpdateIntervalMs) {
+        lastBlynkUpdate = millis();
 
-        if (blynkTaskSucceeded && _p->blynkUpdateHandler) {
-            _p->blynkUpdateHandler();
+        if (blynkTaskSucceeded && blynkUpdateHandler) {
+            blynkUpdateHandler();
         }
     }
 }
 
 IBlynkHandler& CoreApplication::blynkHandler()
 {
-    return _p->blynk;
+    return blynk;
 }
 
 #ifdef IOT_ENABLE_PERSISTENCE
 ISettingsHandler& CoreApplication::settings()
 {
-    return _p->settings;
+    return _settings;
 }
 #endif
 
 ISystemClock& CoreApplication::systemClock()
 {
-    return _p->systemClock;
+    return _systemClock;
 }
 
 void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
 {
-    _p->blynkUpdateHandler = std::move(handler);
+    blynkUpdateHandler = std::move(handler);
 }
 
 void CoreApplication::setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler)
 {
-    _p->arduinoOtaEventHandler = std::move(handler);
+    arduinoOtaEventHandler = std::move(handler);
 }
 
-void IRAM_ATTR CoreApplication::Private::epochTimerIsr()
+void IRAM_ATTR CoreApplication::epochTimerIsr()
 {
     if (instance) {
-        instance->systemClock.timerIsr();
+        instance->_systemClock.timerIsr();
     }
 }
 
-void CoreApplication::Private::setupArduinoOta()
+void CoreApplication::setupArduinoOta()
 {
     if (appConfig.otaUpdate.arduinoOtaPasswordHash) {
         ArduinoOTA.setPasswordHash(appConfig.otaUpdate.arduinoOtaPasswordHash);
@@ -336,12 +259,12 @@ void CoreApplication::Private::setupArduinoOta()
     ArduinoOTA.begin();
 }
 
-void CoreApplication::Private::setupSerialPort()
+void CoreApplication::setupSerialPort()
 {
     Serial.begin(appConfig.serial.baudRate);
 }
 
-void CoreApplication::Private::setupWiFiStation()
+void CoreApplication::setupWiFiStation()
 {
     log.info("Setting up WiFi station: SSID=%s", appConfig.wifi.ssid);
 
@@ -355,17 +278,17 @@ void CoreApplication::Private::setupWiFiStation()
     WiFi.begin(appConfig.wifi.ssid, appConfig.wifi.password);
 }
 
-void CoreApplication::Private::setupEpochTimer()
+void CoreApplication::setupEpochTimer()
 {
     log.info("Setting up Timer1 as epoch timer");
 
     timer1_isr_init();
-    timer1_attachInterrupt(CoreApplication::Private::epochTimerIsr);
+    timer1_attachInterrupt(CoreApplication::epochTimerIsr);
     timer1_enable(TIM_DIV256, TIM_EDGE, TIM_LOOP);
     timer1_write(100);
 }
 
-void CoreApplication::Private::setupFileSystem()
+void CoreApplication::setupFileSystem()
 {
     log.info("Setting up file system");
 
@@ -373,7 +296,7 @@ void CoreApplication::Private::setupFileSystem()
 }
 
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
-void CoreApplication::Private::setupRtcDigitalTrimming()
+void CoreApplication::setupRtcDigitalTrimming()
 {
     if (!appConfig.rtc.enableDigitalTrimming) {
         return;

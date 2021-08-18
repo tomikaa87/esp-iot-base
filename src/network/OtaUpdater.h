@@ -23,6 +23,10 @@
 #include "ApplicationConfig.h"
 #include "Logger.h"
 
+#include "utils/PlacementHelper.h"
+
+#include <asyncHTTPrequest.h>
+
 #include <ctime>
 #include <functional>
 #include <memory>
@@ -74,7 +78,8 @@ private:
     std::time_t _rebootTimestamp = 0;
     std::time_t _requestStartTimestamp = 0;
     bool _forceUpdateCheck = false;
-    std::unique_ptr<asyncHTTPrequest> _httpClient;
+    PlacementContainer<asyncHTTPrequest> _httpClientContainer;
+    PlacementAccessor<asyncHTTPrequest> _httpClient;
 
     void createVersionInfoRequest();
 

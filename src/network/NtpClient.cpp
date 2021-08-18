@@ -23,6 +23,7 @@
 
 NtpClient::NtpClient(SystemClock& systemClock)
     : _systemClock(systemClock)
+    , _socket(_socketContainer)
 {
     _log.info("initializing");
 }
@@ -35,7 +36,7 @@ void NtpClient::task()
                 _log.info("update needed, starting");
                 _state = State::SendPacket;
 
-                _socket.reset(new WiFiUDP);
+                _socket.construct();
                 _socket->begin(NtpDefaultLocalPort);
             }
             break;
@@ -55,7 +56,7 @@ void NtpClient::task()
                     _log.warning("socket timeout, retrying in %d second(s)", RetryIntervalSeconds);
                     _lastUpdate = _systemClock.utcTime() - UpdateInterval + RetryIntervalSeconds;
                     _state = State::Idle;
-                    _socket.reset();
+                    _socket.destroy();
                 }
 
                 break;
@@ -76,7 +77,7 @@ void NtpClient::task()
             _log.info("finished, epoch: %ld", epoch);
             _lastUpdate = _systemClock.utcTime();
             _state = State::Idle;
-            _socket.reset();
+            _socket.destroy();
 
             break;
         }

@@ -21,7 +21,6 @@
 #include "OtaUpdater.h"
 #include "SystemClock.h"
 
-#include <asyncHTTPrequest.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiSTA.h>
 #include <ESP8266httpUpdate.h>
@@ -29,6 +28,7 @@
 OtaUpdater::OtaUpdater(const ApplicationConfig& appConfig, const SystemClock& systemClock)
     : _appConfig(appConfig)
     , _systemClock(systemClock)
+    , _httpClient(_httpClientContainer)
 {
     _log.info("initializing");
 }
@@ -64,7 +64,7 @@ void OtaUpdater::task()
                 if (!_httpClient->send()) {
                     _log.error("failed to send HTTP request");
 
-                    _httpClient.reset();
+                    _httpClient.destroy();
                     _state = State::Idle;
 
                     if (_updateStateChangedHandler) {
@@ -80,7 +80,7 @@ void OtaUpdater::task()
                     _log.warning("version check request timed out");
 
                     _state = State::Idle;
-                    _httpClient.reset();
+                    _httpClient.destroy();
 
                     if (_updateStateChangedHandler) {
                         _updateStateChangedHandler(UpdateState::CheckFailed);
@@ -91,7 +91,7 @@ void OtaUpdater::task()
             if (_httpClient->responseHTTPcode() != 200) {
                 _log.warning("HTTP request failed, response code: %d", _httpClient->responseHTTPcode());
                 _state = State::Idle;
-                _httpClient.reset();
+                _httpClient.destroy();
                 break;
             }
             switch (checkVersion(_httpClient->responseText().c_str())) {
@@ -99,7 +99,7 @@ void OtaUpdater::task()
                     _log.info("firmware is up-to-date");
 
                     _state = State::Idle;
-                    _httpClient.reset();
+                    _httpClient.destroy();
 
                     if (_updateStateChangedHandler) {
                         _updateStateChangedHandler(UpdateState::NoUpdateNeeded);
@@ -110,7 +110,7 @@ void OtaUpdater::task()
                     _log.warning("cannot check update version");
 
                     _state = State::Idle;
-                    _httpClient.reset();
+                    _httpClient.destroy();
 
                     if (_updateStateChangedHandler) {
                         _updateStateChangedHandler(UpdateState::CheckFailed);
@@ -133,7 +133,7 @@ void OtaUpdater::task()
                     _log.error("invalid version check result");
 
                     _state = State::Idle;
-                    _httpClient.reset();
+                    _httpClient.destroy();
 
                     break;
             }
@@ -207,7 +207,7 @@ void OtaUpdater::createVersionInfoRequest()
 
     _log.debug("creating version info request, URL: %s", url.c_str());
 
-    _httpClient.reset(new asyncHTTPrequest);
+    _httpClient.construct();
     _httpClient->setDebug(false);
     _httpClient->setTimeout(5); // seconds
     _httpClient->open("GET", url.c_str());

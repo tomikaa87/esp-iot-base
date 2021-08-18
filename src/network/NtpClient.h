@@ -22,12 +22,13 @@
 
 #include "Logger.h"
 
+#include "utils/PlacementHelper.h"
+
 #include <Arduino.h>
 #include <WiFiUdp.h>
 
 #include <ctime>
 #include <functional>
-#include <memory>
 
 class SystemClock;
 
@@ -59,7 +60,8 @@ private:
     SystemClock& _systemClock;
     Logger _log{ "NtpClient" };
     UpdatedHandler _updatedHandler;
-    std::unique_ptr<WiFiUDP> _socket = nullptr;
+    PlacementContainer<WiFiUDP> _socketContainer;
+    PlacementAccessor<WiFiUDP> _socket;
     std::time_t _lastUpdate = 0;
     uint32_t _sendTimestamp = 0;
 

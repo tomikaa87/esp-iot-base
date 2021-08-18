@@ -2,13 +2,14 @@
 
 #include <Arduino.h>
 
-static std::unique_ptr<CoreApplication> application;
+static CoreApplication* application = nullptr;
 
 void setup()
 {
     static ApplicationConfig appConfig;
 
-    application.reset(new CoreApplication(appConfig));
+    static CoreApplication app(appConfig);
+    application = &app;
 
     Serial.println("Initialization finished");
 }
