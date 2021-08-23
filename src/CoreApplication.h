@@ -26,6 +26,7 @@
 #include "ISystemClock.h"
 
 #include "Logger.h"
+#include "MemoryMonitor.h"
 #include "SettingsHandler.h"
 #include "SystemClock.h"
 
@@ -81,7 +82,8 @@ public:
     void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);
 
 private:
-    Logger log{ "CoreApplication" };
+    MemoryMonitor _memoryMonitor;
+    Logger _log{ "CoreApplication" };
     const bool _i2cInitialized;
     const ApplicationConfig& appConfig;
     SystemClock _systemClock;

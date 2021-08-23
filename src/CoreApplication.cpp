@@ -47,14 +47,10 @@ CoreApplication::CoreApplication(const ApplicationConfig& appConfig)
     , _settings(settingsPersistence)
 #endif
 {
+    // system_update_cpu_freq(160);
+
     // Serial port
     setupSerialPort();
-
-    Serial.printf_P(PSTR("Free heap before CA init: %u\n"), ESP.getFreeHeap());
-
-    static WiFiClientSecure wcs;
-
-    Serial.printf_P(PSTR("Free heap after WCS init: %u\n"), ESP.getFreeHeap());
 
     // Epoch timer
     setupEpochTimer();
@@ -76,13 +72,17 @@ CoreApplication::CoreApplication(const ApplicationConfig& appConfig)
     // TODO de-init before SystemClock is destroyed
     Logger::setup(appConfig, _systemClock);
 
-    Serial.printf_P(PSTR("Free heap after CA init: %u\n"), ESP.getFreeHeap());
+    _memoryMonitor.logMemoryStats(PSTR("after CoreApplication init"));
+
+    _log.info_p(PSTR("CPU frequency: %u MHz"), system_get_cpu_freq());
 
     instance = this;
 }
 
 void CoreApplication::task()
 {
+    _memoryMonitor.task();
+
     wifiWatchdog.task();
 
     _systemClock.task();
@@ -134,7 +134,7 @@ void CoreApplication::task()
     if (lastBlynkUpdate == 0 || millis() - lastBlynkUpdate >= BlynkUpdateIntervalMs) {
         lastBlynkUpdate = millis();
 
-        if (blynkTaskSucceeded && blynkUpdateHandler) {
+        if (blynkTaskSucceeded && blynkUpdateHandler && blynkTaskCanRun) {
             blynkUpdateHandler();
         }
     }
