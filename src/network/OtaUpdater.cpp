@@ -30,7 +30,7 @@ OtaUpdater::OtaUpdater(const ApplicationConfig& appConfig, const SystemClock& sy
     , _systemClock(systemClock)
     , _httpClient(_httpClientContainer)
 {
-    _log.info("initializing");
+    _log.info_p(PSTR("initializing"));
 }
 
 OtaUpdater::~OtaUpdater() = default;
@@ -41,7 +41,7 @@ void OtaUpdater::task()
         case State::Idle:
             if ((/*_lastCheckedForUpdates > 0 && */_systemClock.utcTime() - _lastCheckedForUpdates >= _updateCheckIntervalSeconds)
                     || _forceUpdateCheck) {
-                _log.info("checking for updates");
+                _log.info_p(PSTR("checking for updates"));
 
                 _state = State::GetAvailableVersion;
                 _forceUpdateCheck = false;
@@ -49,7 +49,7 @@ void OtaUpdater::task()
                 _lastCheckedForUpdates = _systemClock.utcTime();
 
                 if (!WiFi.isConnected()) {
-                    _log.warning("cannot check for updates, WiFi is not connected");
+                    _log.warning_p(PSTR("cannot check for updates, WiFi is not connected"));
                     _state = State::Idle;
                     break;
                 }
@@ -62,7 +62,7 @@ void OtaUpdater::task()
 
                 createVersionInfoRequest();
                 if (!_httpClient->send()) {
-                    _log.error("failed to send HTTP request");
+                    _log.error_p(PSTR("failed to send HTTP request"));
 
                     _httpClient.destroy();
                     _state = State::Idle;
@@ -77,7 +77,7 @@ void OtaUpdater::task()
         case State::GetAvailableVersion:
             if (_httpClient->readyState() != 4) {
                 if (_systemClock.utcTime() - _requestStartTimestamp >= 10) {
-                    _log.warning("version check request timed out");
+                    _log.warning_p(PSTR("version check request timed out"));
 
                     _state = State::Idle;
                     _httpClient.destroy();
@@ -89,14 +89,14 @@ void OtaUpdater::task()
                 break;
             }
             if (_httpClient->responseHTTPcode() != 200) {
-                _log.warning("HTTP request failed, response code: %d", _httpClient->responseHTTPcode());
+                _log.warning_p(PSTR("HTTP request failed, response code: %d"), _httpClient->responseHTTPcode());
                 _state = State::Idle;
                 _httpClient.destroy();
                 break;
             }
             switch (checkVersion(_httpClient->responseText().c_str())) {
                 case VersionCheckResult::NoUpdateNeeded:
-                    _log.info("firmware is up-to-date");
+                    _log.info_p(PSTR("firmware is up-to-date"));
 
                     _state = State::Idle;
                     _httpClient.destroy();
@@ -107,7 +107,7 @@ void OtaUpdater::task()
                     break;
 
                 case VersionCheckResult::CannotCheckVersion: {
-                    _log.warning("cannot check update version");
+                    _log.warning_p(PSTR("cannot check update version"));
 
                     _state = State::Idle;
                     _httpClient.destroy();
@@ -119,7 +119,7 @@ void OtaUpdater::task()
                 }
 
                 case VersionCheckResult::UpdateNeeded: {
-                    _log.info("firmware update is necessary");
+                    _log.info_p(PSTR("firmware update is necessary"));
 
                     _state = State::DownloadUpdate;
 
@@ -130,7 +130,7 @@ void OtaUpdater::task()
                 }
 
                 default:
-                    _log.error("invalid version check result");
+                    _log.error_p(PSTR("invalid version check result"));
 
                     _state = State::Idle;
                     _httpClient.destroy();
@@ -140,13 +140,13 @@ void OtaUpdater::task()
             break;
 
         case State::DownloadUpdate: {
-            _log.info("downloading and updating firmware");
+            _log.info_p(PSTR("downloading and updating firmware"));
 
             WiFiClient wifiClient;
 
             switch (ESPhttpUpdate.update(wifiClient, getFwUpdateUrl().c_str())) {
                 case HTTP_UPDATE_OK:
-                    _log.info("update succeeded, procedding to reboot");
+                    _log.info_p(PSTR("update succeeded, procedding to reboot"));
 
                     _rebootTimestamp = _systemClock.utcTime();
                     _state = State::Reboot;
@@ -158,7 +158,7 @@ void OtaUpdater::task()
                     break;
 
                 default:
-                    _log.error("update failed, error: %s", ESPhttpUpdate.getLastErrorString().c_str());
+                    _log.error_p(PSTR("update failed, error: %s"), ESPhttpUpdate.getLastErrorString().c_str());
 
                     _state = State::Idle;
 
@@ -175,7 +175,7 @@ void OtaUpdater::task()
                 break;
             }
 
-            _log.info("rebooting");
+            _log.info_p(PSTR("rebooting"));
 
             ESP.restart();
 
@@ -186,7 +186,7 @@ void OtaUpdater::task()
 
 void OtaUpdater::forceUpdate()
 {
-    _log.info("forcing update check");
+    _log.info_p(PSTR("forcing update check"));
 
     _forceUpdateCheck = true;
 }
@@ -199,13 +199,13 @@ void OtaUpdater::setUpdateStateChangedHandler(UpdateStateChangedHandler&& handle
 void OtaUpdater::createVersionInfoRequest()
 {
     if (_httpClient) {
-        _log.warning("HTTP client already created");
+        _log.warning_p(PSTR("HTTP client already created"));
     }
 
     std::string url{ _appConfig.otaUpdate.updateUrl };
     url.append("/").append(WiFi.macAddress().c_str()).append("/version");
 
-    _log.debug("creating version info request, URL: %s", url.c_str());
+    _log.debug_p(PSTR("creating version info request, URL: %s"), url.c_str());
 
     _httpClient.construct();
     _httpClient->setDebug(false);

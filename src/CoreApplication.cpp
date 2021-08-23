@@ -179,7 +179,7 @@ void CoreApplication::setupArduinoOta()
     if (appConfig.otaUpdate.arduinoOtaPasswordHash) {
         ArduinoOTA.setPasswordHash(appConfig.otaUpdate.arduinoOtaPasswordHash);
     } else {
-        log.warning("no password hash set for Arduino OTA");
+        _log.warning_p(PSTR("no password hash set for Arduino OTA"));
     }
 
     ArduinoOTA.onStart([this] {
@@ -190,7 +190,7 @@ void CoreApplication::setupArduinoOta()
             type = "file system";
         }
 
-        log.info("ArduinoOTA: starting update, type=%s", type);
+        _log.info_p(PSTR("ArduinoOTA: starting update, type=%s"), type);
 
         if (arduinoOtaEventHandler) {
             arduinoOtaEventHandler(
@@ -202,7 +202,7 @@ void CoreApplication::setupArduinoOta()
     });
 
     ArduinoOTA.onEnd([this] {
-        log.info("ArduinoOTA: ended");
+        _log.info_p(PSTR("ArduinoOTA: ended"));
 
         if (arduinoOtaEventHandler) {
             arduinoOtaEventHandler(ArduinoOtaEvent::Ended);
@@ -253,7 +253,7 @@ void CoreApplication::setupArduinoOta()
                 break;
         }
 
-        log.error("ArduinoOTA: update failed, error: %s", errorStr);
+        _log.error_p(PSTR("ArduinoOTA: update failed, error: %s"), errorStr);
     });
 
     ArduinoOTA.begin();
@@ -266,7 +266,7 @@ void CoreApplication::setupSerialPort()
 
 void CoreApplication::setupWiFiStation()
 {
-    log.info("Setting up WiFi station: SSID=%s", appConfig.wifi.ssid);
+    _log.info_p(PSTR("Setting up WiFi station: SSID=%s"), appConfig.wifi.ssid);
 
     WiFi.mode(WIFI_STA);
     WiFi.setAutoConnect(true);
@@ -280,7 +280,7 @@ void CoreApplication::setupWiFiStation()
 
 void CoreApplication::setupEpochTimer()
 {
-    log.info("Setting up Timer1 as epoch timer");
+    _log.info_p(PSTR("Setting up Timer1 as epoch timer"));
 
     timer1_isr_init();
     timer1_attachInterrupt(CoreApplication::epochTimerIsr);
@@ -290,7 +290,7 @@ void CoreApplication::setupEpochTimer()
 
 void CoreApplication::setupFileSystem()
 {
-    log.info("Setting up file system");
+    _log.info_p(PSTR("Setting up file system"));
 
     LittleFS.begin();
 }
@@ -302,7 +302,7 @@ void CoreApplication::setupRtcDigitalTrimming()
         return;
     }
 
-    log.info("Setting up RTC digital trimming: value=%d, coarse=%s",
+    _log.info_p(PSTR("Setting up RTC digital trimming: value=%d, coarse=%s"),
         appConfig.rtc.digitalTrimValue,
         appConfig.rtc.enableCoarseDigitalTrimming ? "yes" : "no"
     );

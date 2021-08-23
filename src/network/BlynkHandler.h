@@ -61,7 +61,7 @@ public:
     void writeTerminal(int pin, const char* text) override;
 
 private:
-    Logger _log{ "Blynk" };
+    Logger _log{ "BlynkHandler" };
     const ApplicationConfig& _appConfig;
 
     ConnectedHandler _connectedHandler;

@@ -31,7 +31,7 @@ using rtc = Drivers::MCP7940N;
 
 SystemClock::SystemClock()
 {
-    _log.info("initializing");
+    _log.info_p(PSTR("initializing"));
 
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
     setupHwRtc();
@@ -43,7 +43,7 @@ void SystemClock::task()
 {
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
     if (_lastRtcSync > 0 && _epoch - _lastRtcSync > RtcSyncIntervalSec) {
-        _log.info("automatic update from RTC triggered");
+        _log.info_p(PSTR("automatic update from RTC triggered"));
         updateFromRtc();
     }
 #endif
@@ -79,7 +79,7 @@ bool SystemClock::isSynchronized() const
 
 void SystemClock::setUtcTime(const std::time_t t)
 {
-    _log.info("setting UTC time: %ld", t);
+    _log.info_p(PSTR("setting UTC time: %ld"), t);
 
     _epoch = t;
     _synchronized = true;
@@ -96,7 +96,7 @@ void SystemClock::setUtcTime(const std::time_t t)
 void SystemClock::setupHwRtc()
 {
     if (rtc::getPowerFailFlag()) {
-        _log.warning("power failure detected");
+        _log.warning_p(PSTR("power failure detected"));
         rtc::clearPowerFailFlag();
     }
 
@@ -105,7 +105,7 @@ void SystemClock::setupHwRtc()
 
     // TODO this check is bogus
     if (!rtc::isOscillatorRunning()) {
-        _log.warning("RTC oscillator has stopped");
+        _log.warning_p(PSTR("RTC oscillator has stopped"));
     }
 
     // Enable square wave output on MFP pin
@@ -125,7 +125,7 @@ void SystemClock::updateFromRtc()
     rtcTm.tm_mon = dt.month - 1;     // RTC: 1-12, C: 0-11
     rtcTm.tm_year = dt.year + 100;   // RTC: 0-99, C: 1900 + value
 
-    _log.info("time updated from RTC (UTC): %d-%02d-%02d %d:%02d:%02d",
+    _log.info_p(PSTR("time updated from RTC (UTC): %d-%02d-%02d %d:%02d:%02d"),
         rtcTm.tm_year + 1900,
         rtcTm.tm_mon + 1,
         rtcTm.tm_mday,
@@ -138,14 +138,14 @@ void SystemClock::updateFromRtc()
     _lastRtcSync = _epoch;
     _synchronized = true;
 
-    _log.info("epoch after updating: %ld", _epoch);
+    _log.info_p(PSTR("epoch after updating: %ld"), _epoch);
 
     sychronizeCLibClock();
 }
 
 void SystemClock::updateRtc()
 {
-    _log.info("updating RTC, epoch: %ld", _epoch);
+    _log.info_p(PSTR("updating RTC, epoch: %ld"), _epoch);
 
     const auto tm = gmtime(&_epoch);
 
@@ -161,7 +161,7 @@ void SystemClock::updateRtc()
 
     rtc::setDateTime(dt);
 
-    _log.info("RTC update finished, current time (UTC): %d-%02d-%02d %d:%02d:%02d",
+    _log.info_p(PSTR("RTC update finished, current time (UTC): %d-%02d-%02d %d:%02d:%02d"),
         tm->tm_year + 1900,
         tm->tm_mon + 1,
         tm->tm_mday,
@@ -175,7 +175,7 @@ void SystemClock::updateRtc()
 
 void SystemClock::sychronizeCLibClock()
 {
-    _log.info("synchronizing clock of C Runtime Library");
+    _log.info_p(PSTR("synchronizing clock of C Runtime Library"));
 
     timeval tv;
     tv.tv_sec = _epoch;
@@ -184,10 +184,10 @@ void SystemClock::sychronizeCLibClock()
     const auto result = settimeofday(&tv, nullptr);
 
     if (result != 0) {
-        _log.warning("call to settimeofday() failed: result=%d", result);
+        _log.warning_p(PSTR("call to settimeofday() failed: result=%d"), result);
     }
 
-    _log.debug("result of time(): %ld", time(nullptr));
+    _log.debug_p(PSTR("result of time(): %ld"), time(nullptr));
 }
 
 bool SystemClock::isDst(const std::time_t t)

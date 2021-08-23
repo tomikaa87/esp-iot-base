@@ -27,6 +27,7 @@
 #include <string>
 
 #include <Arduino.h>
+#include <pgmspace.h>
 #include <StreamString.h>
 #include <WiFiUdp.h>
 
@@ -77,6 +78,36 @@ public:
     }
 
     template <typename... Params>
+    void log_p(Severity severity, PGM_P fmt, Params... params) const
+    {
+        StreamString ss;
+
+        if (!_inBlock) {
+            ss.printf_P("[%c][%s]: ", severityIndicator(severity), _category.c_str());
+        }
+
+        if (sizeof...(params) == 0) {
+            ss.print(fmt);
+        } else {
+            ss.printf_P(fmt, params...);
+        }
+
+        PlacementAccessor<Private> pa(_pContainer);
+
+        if (!pa.empty() && pa->appConfig.logging.syslog.enabled) {
+            pa->sendToSyslogServer(pa->appConfig.logging.syslog.hostName, ss.c_str());
+        }
+
+        // Print new line after sending the message to Syslog server
+        if (!_inBlock) {
+            ss.println();
+        }
+
+        Serial.print(ss);
+        Serial.flush();
+    }
+
+    template <typename... Params>
     void error(const char* fmt, Params... params) const
     {
         log(Severity::Error, fmt, params...);
@@ -98,6 +129,30 @@ public:
     void debug(const char* fmt, Params... params) const
     {
         log(Severity::Debug, fmt, params...);
+    }
+
+    template <typename... Params>
+    void error_p(PGM_P fmt, Params... params) const
+    {
+        log_p(Severity::Error, fmt, params...);
+    }
+
+    template <typename... Params>
+    void warning_p(PGM_P fmt, Params... params) const
+    {
+        log_p(Severity::Warning, fmt, params...);
+    }
+
+    template <typename... Params>
+    void info_p(PGM_P fmt, Params... params) const
+    {
+        log_p(Severity::Info, fmt, params...);
+    }
+
+    template <typename... Params>
+    void debug_p(PGM_P fmt, Params... params) const
+    {
+        log_p(Severity::Debug, fmt, params...);
     }
 
     struct Block
