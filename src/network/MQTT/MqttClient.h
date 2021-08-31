@@ -17,7 +17,7 @@ public:
 
     void task();
 
-    void publish(const char* topic, const char* payload);
+    void publish(const char* topic, const std::string& payload);
 
     void subscribe(const char* topic, MqttVariableBase* base);
     void unsubscribe(const char* topic, MqttVariableBase* base);

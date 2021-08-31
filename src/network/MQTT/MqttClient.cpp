@@ -49,10 +49,12 @@ void MqttClient::task()
     }
 }
 
-void MqttClient::publish(const char* topic, const char* payload)
+void MqttClient::publish(const char* topic, const std::string& payload)
 {
+    // _log.debug("publish: topic=%s, payload=%s", topic, payload.c_str());
+
     if (_client.connected()) {
-        _client.publish(topic, payload);
+        _client.publish(topic, payload.c_str());
     }
 }
 

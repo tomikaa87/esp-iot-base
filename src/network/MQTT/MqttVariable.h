@@ -1,51 +1,63 @@
 #pragma once
 
+#include "MqttClient.h"
+#include "MqttVariableBase.h"
+
 #include <string>
+#include <type_traits>
 
 template <typename T>
 T from_payload(const std::string& payload);
 
 template <>
-int from_payload<int>(const std::string& payload)
+inline int from_payload<int>(const std::string& payload)
 {
     return strtol(payload.c_str(), nullptr, 10);
 }
 
 template <>
-unsigned from_payload<unsigned>(const std::string& payload)
+inline unsigned from_payload<unsigned>(const std::string& payload)
 {
     return strtoul(payload.c_str(), nullptr, 10);
 }
 
 template <>
-float from_payload<float>(const std::string& payload)
+inline float from_payload<float>(const std::string& payload)
 {
     return strtof(payload.c_str(), nullptr);
 }
 
 template <>
-double from_payload<double>(const std::string& payload)
+inline double from_payload<double>(const std::string& payload)
 {
     return strtod(payload.c_str(), nullptr);
 }
 
 template <>
-std::string from_payload<std::string>(const std::string& payload)
+inline bool from_payload<bool>(const std::string& payload)
+{
+    return false;
+}
+
+template <>
+inline std::string from_payload<std::string>(const std::string& payload)
 {
     return payload;
 }
 
-std::string to_string(const std::string& payload)
+inline std::string to_string(const std::string& payload)
 {
     return payload;
 }
 
 template <typename T>
-struct MqttVariable : MqttVariableBase {
-    using ValueType = typename std::remove_reference_t<T>;
+class MqttVariable : MqttVariableBase
+{
+public:
+    using ValueType = typename std::remove_reference<T>::type;
 
-    explicit MqttVariable(std::string topic, MqttClient& client)
-        : MqttVariableBase(std::move(topic), client)
+    explicit MqttVariable(const char* topic, MqttClient& client)
+        : MqttVariableBase(topic, client)
     {}
 
     MqttVariable& operator=(ValueType&& v) {
