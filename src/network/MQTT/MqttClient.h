@@ -7,6 +7,8 @@
 
 #include <vector>
 
+#include <pgmspace.h>
+
 class ApplicationConfig;
 class MqttVariableBase;
 
@@ -17,10 +19,10 @@ public:
 
     void task();
 
-    void publish(const char* topic, const std::string& payload);
+    void publish(PGM_P topic, const std::string& payload);
 
-    void subscribe(const char* topic, MqttVariableBase* base);
-    void unsubscribe(const char* topic, MqttVariableBase* base);
+    void subscribe(PGM_P topic, MqttVariableBase* base);
+    void unsubscribe(PGM_P topic, MqttVariableBase* base);
 
 private:
     const ApplicationConfig& _appConfig;
@@ -28,19 +30,20 @@ private:
     WiFiClient _wifiClient;
     PubSubClient _client;
     unsigned long _lastConnectAttemptTime = 0;
-    unsigned long _lastUpdateTime = 0;
     
     struct Variable {
-        Variable(const char* topic, MqttVariableBase* base)
+        Variable(PGM_P topic, MqttVariableBase* base)
             : topic(topic)
             , base(base)
         {}
 
-        const char* topic = nullptr;
+        PGM_P topic = nullptr;
         MqttVariableBase* base = nullptr;
+        bool subscriptionPending = true;
     };
 
     std::vector<Variable> _variables;
+    std::vector<std::string> _pendingUnSubscriptions;
 
     void onClientCallback(const char* topic, const uint8_t* payload, const unsigned int length);
 };

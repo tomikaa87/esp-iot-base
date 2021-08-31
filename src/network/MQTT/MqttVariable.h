@@ -6,6 +6,8 @@
 #include <string>
 #include <type_traits>
 
+#include <pgmspace.h>
+
 template <typename T>
 T from_payload(const std::string& payload);
 
@@ -36,7 +38,7 @@ inline double from_payload<double>(const std::string& payload)
 template <>
 inline bool from_payload<bool>(const std::string& payload)
 {
-    return false;
+    return from_payload<int>(payload) > 0;
 }
 
 template <>
@@ -55,15 +57,27 @@ class MqttVariable : MqttVariableBase
 {
 public:
     using ValueType = typename std::remove_reference<T>::type;
+    using ChangedHandler = std::function<void (const ValueType& value)>;
 
-    explicit MqttVariable(const char* topic, MqttClient& client)
-        : MqttVariableBase(topic, client)
+    MqttVariable(
+        PGM_P stateTopic,
+        MqttClient& client
+    )
+        : MqttVariableBase(stateTopic, client)
+    {}
+
+    MqttVariable(
+        PGM_P stateTopic,
+        PGM_P commandTopic,
+        MqttClient& client
+    )
+        : MqttVariableBase(stateTopic, commandTopic, client)
     {}
 
     MqttVariable& operator=(ValueType&& v) {
         _value = std::forward<ValueType>(v);
         using namespace std;
-        _client.publish(topic(), to_string(_value));
+        _client.publish(stateTopic(), to_string(_value));
         return *this;
     }
 
@@ -71,10 +85,20 @@ public:
         return _value;
     }
 
+    void setChangedHandler(ChangedHandler&& handler)
+    {
+        _changedHandler = std::move(handler);
+    }
+
 private:
     ValueType _value{};
+    ChangedHandler _changedHandler;
 
     void updateWithPayload(const std::string& payload) override {
         _value = from_payload<ValueType>(payload);
+
+        if (_changedHandler) {
+            _changedHandler(_value);
+        }
     }
 };

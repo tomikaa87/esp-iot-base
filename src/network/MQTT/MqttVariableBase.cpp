@@ -1,19 +1,40 @@
 #include "MqttVariableBase.h"
 #include "MqttClient.h"
 
-MqttVariableBase::MqttVariableBase(const char* topic, MqttClient& client)
+MqttVariableBase::MqttVariableBase(
+    PGM_P stateTopic,
+    MqttClient& client
+)
+    : MqttVariableBase(stateTopic, nullptr, client)
+{}
+
+MqttVariableBase::MqttVariableBase(
+    PGM_P stateTopic,
+    PGM_P commandTopic,
+    MqttClient& client
+)
     : _client(client)
-    , _topic(topic)
+    , _stateTopic(stateTopic)
+    , _commandTopic(commandTopic)
 {
-    _client.subscribe(_topic, this);
+    if (_commandTopic) {
+        _client.subscribe(_commandTopic, this);
+    }
 }
 
 MqttVariableBase::~MqttVariableBase()
 {
-    _client.unsubscribe(_topic, this);
+    if (_commandTopic) {
+        _client.unsubscribe(_commandTopic, this);
+    }
 }
 
-const char* MqttVariableBase::topic() const
+PGM_P MqttVariableBase::stateTopic() const
 {
-    return _topic;
+    return _stateTopic;
+}
+
+PGM_P MqttVariableBase::commandTopic() const
+{
+    return _commandTopic;
 }
