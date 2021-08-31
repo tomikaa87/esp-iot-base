@@ -39,6 +39,7 @@
 #include "drivers/SimpleI2C.h"
 
 #include "network/BlynkHandler.h"
+#include "network/MQTT/MqttClient.h"
 #include "network/NtpClient.h"
 #include "network/OtaUpdater.h"
 #include "network/WiFiWatchdog.h"
@@ -62,6 +63,7 @@ struct CoreApplication::Private
             appConfig.persistence.Size
         )
         , settings(settingsPersistence)
+        , mqttClient(appConfig)
 #endif
     {
         instance = this;
@@ -127,6 +129,8 @@ struct CoreApplication::Private
     BlynkUpdateHandler blynkUpdateHandler;
 
     ArduinoOtaEventHandler arduinoOtaEventHandler;
+
+    MqttClient mqttClient;
 
     static Private* instance;
     static void epochTimerIsr();
@@ -205,6 +209,8 @@ void CoreApplication::task()
             _p->blynkUpdateHandler();
         }
     }
+
+    _p->mqttClient.task();
 }
 
 IBlynkHandler& CoreApplication::blynkHandler()

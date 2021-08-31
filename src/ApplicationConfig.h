@@ -25,6 +25,8 @@
 
 #include <cstdint>
 
+#include <IPAddress.h>
+
 struct ApplicationConfig
 {
     struct Blynk
@@ -47,6 +49,14 @@ struct ApplicationConfig
         };
 
         Syslog syslog;
+    };
+
+    struct Mqtt
+    {
+        bool enabled = false;
+        const char* id = "esp-iot";
+        IPAddress brokerIp;
+        uint16_t brokerPort = 1883;
     };
 
     struct OtaUpdate
@@ -91,11 +101,12 @@ struct ApplicationConfig
         const char* password = "";
     };
 
-    const VersionNumber applicationVersion{ 1, 3, 4 };
+    const VersionNumber applicationVersion{ 1, 4, 0 };
     VersionNumber firmwareVersion;
 
     Blynk blynk;
     Logging logging;
+    Mqtt mqtt;
     OtaUpdate otaUpdate;
     Persistence persistence;
     Rtc rtc;
