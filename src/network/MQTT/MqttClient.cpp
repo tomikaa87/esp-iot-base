@@ -64,7 +64,7 @@ void MqttClient::publish(PGM_P const topic, const std::string& payload)
     // _log.debug("publish: topic=%s, payload=%s", sTopic.c_str(), payload.c_str());
 
     if (_client.connected()) {
-        _client.publish(sTopic.c_str(), payload.c_str());
+        _client.publish(sTopic.c_str(), payload.c_str(), true);
     }
 }
 

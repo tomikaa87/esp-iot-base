@@ -75,9 +75,15 @@ public:
     {}
 
     MqttVariable& operator=(ValueType&& v) {
+        if (_value == v) {
+            return *this;
+        }
+
         _value = std::forward<ValueType>(v);
+
         using namespace std;
         _client.publish(stateTopic(), to_string(_value));
+
         return *this;
     }
 
