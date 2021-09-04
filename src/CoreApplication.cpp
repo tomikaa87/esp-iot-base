@@ -39,6 +39,7 @@
 #include "drivers/SimpleI2C.h"
 
 #include "network/BlynkHandler.h"
+#include "network/MQTT/MqttClient.h"
 #include "network/NtpClient.h"
 #include "network/OtaUpdater.h"
 #include "network/WiFiWatchdog.h"
@@ -62,6 +63,7 @@ struct CoreApplication::Private
             appConfig.persistence.Size
         )
         , settings(settingsPersistence)
+        , mqttClient(appConfig)
 #endif
     {
         instance = this;
@@ -128,6 +130,12 @@ struct CoreApplication::Private
 
     ArduinoOtaEventHandler arduinoOtaEventHandler;
 
+    static constexpr auto MqttUpdateIntervalMs = 1000;
+    uint32_t lastMqttUpdate = 0;
+    MqttUpdateHandler mqttUpdateHandler;
+
+    MqttClient mqttClient;
+
     static Private* instance;
     static void epochTimerIsr();
     void setupArduinoOta();
@@ -160,6 +168,10 @@ void CoreApplication::task()
     _p->settings.task();
 #endif
 
+    _p->mqttClient.task();
+
+    const auto currentTime = millis();
+
     // Blynk library tends to freeze if there is no WiFi connection.
     // This is caused by an infinite loop in an connect() call in
     // Blynk.run() if the NTP server is unreachable.
@@ -188,21 +200,30 @@ void CoreApplication::task()
     ArduinoOTA.handle();
 
     // Slow loop
-    if (_p->lastSlowLoopUpdate == 0 || millis() - _p->lastSlowLoopUpdate >= Private::SlowLoopUpdateIntervalMs) {
-        _p->lastSlowLoopUpdate = millis();
+    if (_p->lastSlowLoopUpdate == 0 || currentTime - _p->lastSlowLoopUpdate >= Private::SlowLoopUpdateIntervalMs) {
+        _p->lastSlowLoopUpdate = currentTime;
 
-        if (!_p->updateChecked && _p->wifiWatchdog.isConnected() && millis() - _p->updateCheckTimer >= 5000) {
+        if (!_p->updateChecked && _p->wifiWatchdog.isConnected() && currentTime - _p->updateCheckTimer >= 5000) {
             _p->updateChecked = true;
             _p->otaUpdater.forceUpdate();
         }
     }
 
     // Blynk update loop
-    if (_p->lastBlynkUpdate == 0 || millis() - _p->lastBlynkUpdate >= Private::BlynkUpdateIntervalMs) {
-        _p->lastBlynkUpdate = millis();
+    if (_p->lastBlynkUpdate == 0 || currentTime - _p->lastBlynkUpdate >= Private::BlynkUpdateIntervalMs) {
+        _p->lastBlynkUpdate = currentTime;
 
         if (blynkTaskSucceeded && _p->blynkUpdateHandler) {
             _p->blynkUpdateHandler();
+        }
+    }
+
+    // MQTT update loop
+    if (_p->appConfig.mqtt.enabled && (_p->lastMqttUpdate == 0 || currentTime - _p->lastMqttUpdate >= Private::MqttUpdateIntervalMs)) {
+        _p->lastMqttUpdate = currentTime;
+
+        if (_p->mqttUpdateHandler) {
+            _p->mqttUpdateHandler();
         }
     }
 }
@@ -224,6 +245,11 @@ ISystemClock& CoreApplication::systemClock()
     return _p->systemClock;
 }
 
+MqttClient& CoreApplication::mqttClient()
+{
+    return _p->mqttClient;
+}
+
 void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
 {
     _p->blynkUpdateHandler = std::move(handler);
@@ -232,6 +258,11 @@ void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
 void CoreApplication::setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler)
 {
     _p->arduinoOtaEventHandler = std::move(handler);
+}
+
+void CoreApplication::setMqttUpdateHandler(MqttUpdateHandler&& handler)
+{
+    _p->mqttUpdateHandler = std::move(handler);
 }
 
 void ICACHE_RAM_ATTR CoreApplication::Private::epochTimerIsr()

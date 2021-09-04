@@ -27,10 +27,13 @@
 
 #include <memory>
 
+class MqttClient;
+
 class CoreApplication
 {
 public:
     using BlynkUpdateHandler = std::function<void ()>;
+    using MqttUpdateHandler = std::function<void ()>;
 
     enum class ArduinoOtaEvent {
         FlashUpdateStarted,
@@ -57,8 +60,11 @@ public:
 
     ISystemClock& systemClock();
 
+    MqttClient& mqttClient();
+
     void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
     void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);
+    void setMqttUpdateHandler(MqttUpdateHandler&& handler);
 
 private:
     struct Private;
