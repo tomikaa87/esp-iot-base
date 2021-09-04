@@ -74,12 +74,12 @@ public:
         : MqttVariableBase(stateTopic, commandTopic, client)
     {}
 
-    MqttVariable& operator=(const ValueType& v) {
+    MqttVariable& operator=(ValueType v) {
         if (_value == v) {
             return *this;
         }
 
-        _value = v;
+        _value = std::move(v);
 
         publish();
 
