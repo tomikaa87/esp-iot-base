@@ -61,21 +61,25 @@ public:
 
     MqttVariable(
         PGM_P stateTopic,
-        MqttClient& client
+        MqttClient& client,
+        bool publishOnWrite = false
     )
         : MqttVariableBase(stateTopic, client)
+        , _publishOnWrite(publishOnWrite)
     {}
 
     MqttVariable(
         PGM_P stateTopic,
         PGM_P commandTopic,
-        MqttClient& client
+        MqttClient& client,
+        bool publishOnWrite = false
     )
         : MqttVariableBase(stateTopic, commandTopic, client)
+        , _publishOnWrite(publishOnWrite)
     {}
 
     MqttVariable& operator=(ValueType v) {
-        if (_value == v) {
+        if (!_publishOnWrite && _value == v) {
             return *this;
         }
 
@@ -96,6 +100,7 @@ public:
     }
 
 private:
+    bool _publishOnWrite = false;
     ValueType _value{};
     ChangedHandler _changedHandler;
 
