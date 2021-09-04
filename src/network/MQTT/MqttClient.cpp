@@ -50,6 +50,12 @@ void MqttClient::task()
                         ++it;
                     }
                 }
+
+                for (auto& v : _variables) {
+                    if (v.base->needsPublishing()) {
+                        v.base->publish();
+                    }
+                }
             }
         }
 
@@ -57,14 +63,16 @@ void MqttClient::task()
     }
 }
 
-void MqttClient::publish(PGM_P const topic, const std::string& payload)
+bool MqttClient::publish(PGM_P const topic, const std::string& payload)
 {
     const auto sTopic = Utils::pgmToStdString(topic);
 
     // _log.debug("publish: topic=%s, payload=%s", sTopic.c_str(), payload.c_str());
 
     if (_client.connected()) {
-        _client.publish(sTopic.c_str(), payload.c_str(), true);
+        return _client.publish(sTopic.c_str(), payload.c_str(), true);
+    } else {
+        return false;
     }
 }
 

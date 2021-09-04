@@ -38,3 +38,8 @@ PGM_P MqttVariableBase::commandTopic() const
 {
     return _commandTopic;
 }
+
+bool MqttVariableBase::needsPublishing() const
+{
+    return _needsPublishing;
+}

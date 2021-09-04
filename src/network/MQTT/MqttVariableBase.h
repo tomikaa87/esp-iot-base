@@ -24,12 +24,16 @@ public:
     virtual ~MqttVariableBase();
 
     virtual void updateWithPayload(const std::string& payload) = 0;
+    virtual void publish() = 0;
 
     PGM_P stateTopic() const;
     PGM_P commandTopic() const;
 
+    bool needsPublishing() const;
+
 protected:
     MqttClient& _client;
+    bool _needsPublishing = false;
 
 private:
     PGM_P const _stateTopic;

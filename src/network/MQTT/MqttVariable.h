@@ -74,15 +74,14 @@ public:
         : MqttVariableBase(stateTopic, commandTopic, client)
     {}
 
-    MqttVariable& operator=(ValueType&& v) {
+    MqttVariable& operator=(const ValueType& v) {
         if (_value == v) {
             return *this;
         }
 
-        _value = std::forward<ValueType>(v);
+        _value = v;
 
-        using namespace std;
-        _client.publish(stateTopic(), to_string(_value));
+        publish();
 
         return *this;
     }
@@ -100,11 +99,18 @@ private:
     ValueType _value{};
     ChangedHandler _changedHandler;
 
-    void updateWithPayload(const std::string& payload) override {
+    void updateWithPayload(const std::string& payload) override
+    {
         _value = from_payload<ValueType>(payload);
 
         if (_changedHandler) {
             _changedHandler(_value);
         }
+    }
+
+    void publish() override
+    {
+        using namespace std;
+        _needsPublishing = !_client.publish(stateTopic(), to_string(_value));
     }
 };
