@@ -39,7 +39,6 @@ private:
 
         PGM_P topic = nullptr;
         MqttVariableBase* base = nullptr;
-        bool subscriptionPending = true;
     };
 
     std::vector<Variable> _variables;

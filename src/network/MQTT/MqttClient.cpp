@@ -33,12 +33,9 @@ void MqttClient::task()
                 _log.info("connected");
 
                 for (auto& v : _variables) {
-                    if (v.subscriptionPending) {
-                        const auto topic = Utils::pgmToStdString(v.topic);
-                        if (_client.subscribe(topic.c_str())) {
-                            _log.debug("successfully subscribed: topic=%s", topic.c_str());
-                            v.subscriptionPending = false;
-                        }
+                    const auto topic = Utils::pgmToStdString(v.topic);
+                    if (_client.subscribe(topic.c_str())) {
+                        _log.debug("successfully subscribed: topic=%s", topic.c_str());
                     }
                 }
 
