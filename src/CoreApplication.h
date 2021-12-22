@@ -32,7 +32,9 @@ class MqttClient;
 class CoreApplication
 {
 public:
+#ifdef IOT_ENABLE_BLYNK
     using BlynkUpdateHandler = std::function<void ()>;
+#endif
     using MqttUpdateHandler = std::function<void ()>;
 
     enum class ArduinoOtaEvent {
@@ -53,7 +55,9 @@ public:
 
     void task();
 
+#ifdef IOT_ENABLE_BLYNK
     IBlynkHandler& blynkHandler();
+#endif
 #ifdef IOT_ENABLE_PERSISTENCE
     ISettingsHandler& settings();
 #endif
@@ -62,7 +66,9 @@ public:
 
     MqttClient& mqttClient();
 
+#ifdef IOT_ENABLE_BLYNK
     void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
+#endif
     void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);
     void setMqttUpdateHandler(MqttUpdateHandler&& handler);
 

@@ -20,6 +20,8 @@
 
 #include "BlynkHandler.h"
 
+#ifdef IOT_ENABLE_BLYNK
+
 #ifdef IOT_BLYNK_USE_SSL
 #include <BlynkSimpleEsp8266_SSL.h>
 #else
@@ -544,3 +546,5 @@ void BlynkHandler::writeVariant(const int pin, const Variant& value)
             return;
     }
 }
+
+#endif // IOT_ENABLE_BLYNK

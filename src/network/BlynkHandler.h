@@ -20,6 +20,8 @@
 
 #pragma once
 
+#ifdef IOT_ENABLE_BLYNK
+
 #include "ApplicationConfig.h"
 #include "IBlynkHandler.h"
 #include "Logger.h"
@@ -78,3 +80,5 @@ private:
     static Variant toVariant(const BlynkParam& param);
     static void writeVariant(int pin, const Variant& value);
 };
+
+#endif // IOT_ENABLE_BLYNK

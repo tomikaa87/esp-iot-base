@@ -29,6 +29,7 @@
 
 struct ApplicationConfig
 {
+#ifdef IOT_ENABLE_BLYNK
     struct Blynk
     {
         const char* appToken = "";
@@ -37,6 +38,7 @@ struct ApplicationConfig
         uint16_t serverPort = 80;
         uint32_t updateIntervalMs = 1000;
     };
+#endif
 
     struct Logging
     {
@@ -101,10 +103,12 @@ struct ApplicationConfig
         const char* password = "";
     };
 
-    const VersionNumber applicationVersion{ 1, 4, 1 };
+    const VersionNumber applicationVersion{ 1, 5, 0 };
     VersionNumber firmwareVersion;
 
+#ifdef IOT_ENABLE_BLYNK
     Blynk blynk;
+#endif
     Logging logging;
     Mqtt mqtt;
     OtaUpdate otaUpdate;
