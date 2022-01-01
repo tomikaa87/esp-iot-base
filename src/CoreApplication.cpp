@@ -67,8 +67,8 @@ struct CoreApplication::Private
             appConfig.persistence.Size
         )
         , settings(settingsPersistence)
-        , mqttClient(appConfig)
 #endif
+        , mqttClient(appConfig)
     {
         instance = this;
 
