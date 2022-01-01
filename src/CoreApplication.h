@@ -27,7 +27,9 @@
 
 #include <memory>
 
+#ifdef IOT_ENABLE_MQTT
 class MqttClient;
+#endif
 
 class CoreApplication
 {
@@ -35,7 +37,10 @@ public:
 #ifdef IOT_ENABLE_BLYNK
     using BlynkUpdateHandler = std::function<void ()>;
 #endif
+
+#ifdef IOT_ENABLE_MQTT
     using MqttUpdateHandler = std::function<void ()>;
+#endif
 
     enum class ArduinoOtaEvent {
         FlashUpdateStarted,
@@ -57,20 +62,21 @@ public:
 
 #ifdef IOT_ENABLE_BLYNK
     IBlynkHandler& blynkHandler();
+    void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
 #endif
+
 #ifdef IOT_ENABLE_PERSISTENCE
     ISettingsHandler& settings();
 #endif
 
     ISystemClock& systemClock();
 
+#ifdef IOT_ENABLE_MQTT
     MqttClient& mqttClient();
-
-#ifdef IOT_ENABLE_BLYNK
-    void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
-#endif
-    void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);
     void setMqttUpdateHandler(MqttUpdateHandler&& handler);
+#endif
+
+    void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);
 
 private:
     struct Private;

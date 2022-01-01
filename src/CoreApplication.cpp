@@ -138,9 +138,11 @@ struct CoreApplication::Private
 
     ArduinoOtaEventHandler arduinoOtaEventHandler;
 
+#ifdef IOT_ENABLE_MQTT
     static constexpr auto MqttUpdateIntervalMs = 1000;
     uint32_t lastMqttUpdate = 0;
     MqttUpdateHandler mqttUpdateHandler;
+#endif
 
     MqttClient mqttClient;
 
@@ -230,6 +232,7 @@ void CoreApplication::task()
     }
 #endif
 
+#ifdef IOT_ENABLE_MQTT
     // MQTT update loop
     if (_p->appConfig.mqtt.enabled && (_p->lastMqttUpdate == 0 || currentTime - _p->lastMqttUpdate >= Private::MqttUpdateIntervalMs)) {
         _p->lastMqttUpdate = currentTime;
@@ -238,6 +241,7 @@ void CoreApplication::task()
             _p->mqttUpdateHandler();
         }
     }
+#endif
 }
 
 #ifdef IOT_ENABLE_BLYNK
@@ -259,10 +263,12 @@ ISystemClock& CoreApplication::systemClock()
     return _p->systemClock;
 }
 
+#ifdef IOT_ENABLE_MQTT
 MqttClient& CoreApplication::mqttClient()
 {
     return _p->mqttClient;
 }
+#endif
 
 #ifdef IOT_ENABLE_BLYNK
 void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
@@ -276,10 +282,12 @@ void CoreApplication::setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler
     _p->arduinoOtaEventHandler = std::move(handler);
 }
 
+#ifdef IOT_ENABLE_MQTT
 void CoreApplication::setMqttUpdateHandler(MqttUpdateHandler&& handler)
 {
     _p->mqttUpdateHandler = std::move(handler);
 }
+#endif
 
 void ICACHE_RAM_ATTR CoreApplication::Private::epochTimerIsr()
 {
