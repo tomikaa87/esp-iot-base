@@ -111,6 +111,8 @@ private:
         if (_changedHandler) {
             _changedHandler(_value);
         }
+
+        publish();
     }
 
     void publish() override

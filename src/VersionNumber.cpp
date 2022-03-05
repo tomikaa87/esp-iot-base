@@ -52,6 +52,8 @@ bool VersionNumber::operator!=(const VersionNumber& v) const
     return !(*this == v);
 }
 
+// FIXME this algorithm considers 1.4.1 to be less than 1.2.15
+
 bool VersionNumber::operator<(const VersionNumber& v) const
 {
     for (auto i = 0u; i < _parts.size(); ++i) {
