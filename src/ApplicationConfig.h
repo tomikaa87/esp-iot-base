@@ -59,6 +59,8 @@ struct ApplicationConfig
         const char* id = "esp-iot";
         IPAddress brokerIp;
         uint16_t brokerPort = 1883;
+        const char* user = nullptr;
+        const char* password = nullptr;
     };
 
     struct OtaUpdate
@@ -103,7 +105,7 @@ struct ApplicationConfig
         const char* password = "";
     };
 
-    const VersionNumber applicationVersion{ 1, 5, 1 };
+    const VersionNumber applicationVersion{ 1, 5, 2 };
     VersionNumber firmwareVersion;
 
 #ifdef IOT_ENABLE_BLYNK

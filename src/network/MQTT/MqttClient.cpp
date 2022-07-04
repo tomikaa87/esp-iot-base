@@ -27,9 +27,13 @@ void MqttClient::task()
         if (!_client.connected() && currentTime - _lastConnectAttemptTime >= 5000) {
             _lastConnectAttemptTime = currentTime;
 
-            _log.info("attempting to connect");
+            _log.info(
+                "attempting to connect: brokerIp=%s, brokerPort=%u",
+                _appConfig.mqtt.brokerIp.toString().c_str(),
+                _appConfig.mqtt.brokerPort
+            );
 
-            if (_client.connect(_appConfig.mqtt.id)) {
+            if (_client.connect(_appConfig.mqtt.id, _appConfig.mqtt.user, _appConfig.mqtt.password)) {
                 _log.info("connected");
 
                 for (auto& v : _variables) {
@@ -69,6 +73,7 @@ bool MqttClient::publish(PGM_P const topic, const std::string& payload)
     if (_client.connected()) {
         return _client.publish(sTopic.c_str(), payload.c_str(), true);
     } else {
+        _log.warning("publish: failed, client not connected");
         return false;
     }
 }
