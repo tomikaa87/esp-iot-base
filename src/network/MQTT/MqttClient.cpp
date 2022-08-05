@@ -17,7 +17,11 @@ MqttClient::MqttClient(const ApplicationConfig& appConfig)
         },
         _wifiClient
     )
-{}
+{
+#ifdef IOT_ENABLE_MQTT_LARGE_BUFFER
+    _client.setBufferSize(512);
+#endif
+}
 
 void MqttClient::task()
 {
@@ -57,6 +61,19 @@ void MqttClient::task()
                         v.base->publish();
                     }
                 }
+
+                while (!_pendingPublishes.empty()) {
+                    const auto& p = _pendingPublishes.front();
+
+                    _log.debug("task: publishing pending item, topic=%s, payload=%s", p.first.c_str(), p.second.c_str());
+
+                    if (_client.publish(p.first.c_str(), p.second.c_str(), true)) {
+                        _pendingPublishes.pop();
+                    } else {
+                        _log.warning("task: failed to publish pending item");
+                        break;
+                    }
+                }
             }
         }
 
@@ -73,7 +90,8 @@ bool MqttClient::publish(PGM_P const topic, const std::string& payload)
     if (_client.connected()) {
         return _client.publish(sTopic.c_str(), payload.c_str(), true);
     } else {
-        _log.warning("publish: failed, client not connected");
+        _log.warning("publish: pending, client not connected");
+        _pendingPublishes.push(std::make_pair(sTopic, payload));
         return false;
     }
 }

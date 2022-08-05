@@ -5,6 +5,7 @@
 #include <PubSubClient.h>
 #include <WiFiClient.h>
 
+#include <queue>
 #include <vector>
 
 #include <pgmspace.h>
@@ -43,6 +44,7 @@ private:
 
     std::vector<Variable> _variables;
     std::vector<std::string> _pendingUnSubscriptions;
+    std::queue<std::pair<std::string, std::string>> _pendingPublishes;
 
     void onClientCallback(const char* topic, const uint8_t* payload, const unsigned int length);
 };
