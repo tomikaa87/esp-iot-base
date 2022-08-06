@@ -289,7 +289,7 @@ void CoreApplication::setMqttUpdateHandler(MqttUpdateHandler&& handler)
 }
 #endif
 
-void ICACHE_RAM_ATTR CoreApplication::Private::epochTimerIsr()
+void IRAM_ATTR CoreApplication::Private::epochTimerIsr()
 {
     if (instance) {
         instance->systemClock.timerIsr();
