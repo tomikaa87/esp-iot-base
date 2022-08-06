@@ -86,15 +86,18 @@ void MqttClient::task()
 
 bool MqttClient::publish(PGM_P const topic, const std::string& payload)
 {
-    const auto sTopic = Utils::pgmToStdString(topic);
+    return publish(Utils::pgmToStdString(topic), payload);
+}
 
-    _log.debug("publish: topic=%s, payload=%s", sTopic.c_str(), payload.c_str());
+bool MqttClient::publish(const std::string& topic, const std::string& payload)
+{
+    _log.debug("publish: topic=%s, payload=%s", topic.c_str(), payload.c_str());
 
     if (_client.connected()) {
-        return _client.publish(sTopic.c_str(), payload.c_str(), true);
+        return _client.publish(topic.c_str(), payload.c_str(), true);
     } else {
         _log.warning("publish: pending, client not connected");
-        _pendingPublishes.push(std::make_pair(sTopic, payload));
+        _pendingPublishes.push(std::make_pair(topic, payload));
         return false;
     }
 }

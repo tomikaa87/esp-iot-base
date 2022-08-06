@@ -21,6 +21,7 @@ public:
     void task();
 
     bool publish(PGM_P topic, const std::string& payload);
+    bool publish(const std::string& topic, const std::string& payload);
 
     void subscribe(PGM_P topic, MqttVariableBase* base);
     void unsubscribe(PGM_P topic, MqttVariableBase* base);
