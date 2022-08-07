@@ -39,8 +39,12 @@ void OtaUpdater::task()
 {
     switch (_state) {
         case State::Idle:
-            if ((/*_lastCheckedForUpdates > 0 && */_systemClock.utcTime() - _lastCheckedForUpdates >= _updateCheckIntervalSeconds)
-                    || _forceUpdateCheck) {
+            if (
+#ifdef IOT_ENABLE_PERIODIC_HTTP_UPDATE_CHECK
+                (/*_lastCheckedForUpdates > 0 && */_systemClock.utcTime() - _lastCheckedForUpdates >= _updateCheckIntervalSeconds) ||
+#endif
+                _forceUpdateCheck
+            ) {
                 _log.info("checking for updates");
 
                 _state = State::GetAvailableVersion;
