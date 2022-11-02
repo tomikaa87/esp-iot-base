@@ -105,7 +105,7 @@ struct ApplicationConfig
         const char* password = "";
     };
 
-    const VersionNumber applicationVersion{ 1, 5, 6 };
+    const VersionNumber applicationVersion{ 1, 5, 7 };
     VersionNumber firmwareVersion;
 
 #ifdef IOT_ENABLE_BLYNK
