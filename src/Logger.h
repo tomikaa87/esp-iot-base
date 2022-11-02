@@ -73,6 +73,33 @@ public:
     }
 
     template <typename... Params>
+    void log_P(Severity severity, PGM_P fmt, Params... params) const
+    {
+        StreamString ss;
+
+        if (!_inBlock) {
+            ss.printf_P(PSTR("[%c][%s]: "), severityIndicator(severity), _category.c_str());
+        }
+
+        if (sizeof...(params) == 0) {
+            ss.printf_P(PSTR("%s"), fmt);
+        } else {
+            ss.printf_P(fmt, params...);
+        }
+
+        if (_p && _p->appConfig.logging.syslog.enabled) {
+            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
+        }
+
+        // Print new line after sending the message to Syslog server
+        if (!_inBlock) {
+            ss.println();
+        }
+
+        Serial.print(ss);
+    }
+
+    template <typename... Params>
     void error(const char* fmt, Params... params) const
     {
         log(Severity::Error, fmt, params...);
@@ -94,6 +121,30 @@ public:
     void debug(const char* fmt, Params... params) const
     {
         log(Severity::Debug, fmt, params...);
+    }
+
+    template <typename... Params>
+    void error_P(PGM_P fmt, Params... params) const
+    {
+        log_P(Severity::Error, fmt, params...);
+    }
+
+    template <typename... Params>
+    void warning_P(PGM_P fmt, Params... params) const
+    {
+        log_P(Severity::Warning, fmt, params...);
+    }
+
+    template <typename... Params>
+    void info_P(PGM_P fmt, Params... params) const
+    {
+        log_P(Severity::Info, fmt, params...);
+    }
+
+    template <typename... Params>
+    void debug_P(PGM_P fmt, Params... params) const
+    {
+        log_P(Severity::Debug, fmt, params...);
     }
 
     struct Block
@@ -137,9 +188,39 @@ public:
     }
 
     template <typename... Params>
+    Block logBlock_P(Severity severity, PGM_P fmt, Params... params) const
+    {
+        _inBlock = true;
+
+        StreamString ss;
+
+        ss.printf_P(PSTR("[%c][%s]: "), severityIndicator(severity), _category.c_str());
+
+        if (sizeof...(params) == 0) {
+            ss.printf_P(PSTR("%s"), fmt);
+        } else {
+            ss.printf_P(fmt, params...);
+        }
+
+        Serial.print(ss);
+
+        if (_p && _p->appConfig.logging.syslog.enabled) {
+            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
+        }
+
+        return Block{ _inBlock };
+    }
+
+    template <typename... Params>
     Block debugBlock(const char* fmt, Params... params) const
     {
         return logBlock(Severity::Debug, fmt, params...);
+    }
+
+    template <typename... Params>
+    Block debugBlock_P(PGM_P fmt, Params... params) const
+    {
+        return logBlock_P(Severity::Debug, fmt, params...);
     }
 
 private:

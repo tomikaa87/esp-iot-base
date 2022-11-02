@@ -24,7 +24,7 @@
 NtpClient::NtpClient(SystemClock& systemClock)
     : _systemClock(systemClock)
 {
-    _log.info("initializing");
+    _log.info_P(PSTR("initializing"));
 }
 
 void NtpClient::task()
@@ -32,7 +32,7 @@ void NtpClient::task()
     switch (_state) {
         case State::Idle:
             if (_lastUpdate == 0 || _systemClock.utcTime() - _lastUpdate > UpdateInterval) {
-                _log.info("update needed, starting");
+                _log.info_P(PSTR("update needed, starting"));
                 _state = State::SendPacket;
 
                 _socket.reset(new WiFiUDP);
@@ -43,7 +43,7 @@ void NtpClient::task()
         case State::SendPacket:
             _sendTimestamp = millis();
             sendPacket();
-            _log.info("waiting for response");
+            _log.info_P(PSTR("waiting for response"));
             _state = State::WaitResponse;
             break;
 
@@ -52,7 +52,7 @@ void NtpClient::task()
 
             if (_socket->parsePacket() == 0) {
                 if (elapsed > 1000) {
-                    _log.warning("socket timeout, retrying in %d second(s)", RetryIntervalSeconds);
+                    _log.warning_P(PSTR("socket timeout, retrying in %d second(s)"), RetryIntervalSeconds);
                     _lastUpdate = _systemClock.utcTime() - UpdateInterval + RetryIntervalSeconds;
                     _state = State::Idle;
                     _socket.reset();
@@ -63,7 +63,7 @@ void NtpClient::task()
 
             uint8_t packet[NtpPacketSize] = { 0 };
             if (!_socket->read(packet, sizeof(packet))) {
-                _log.warning("socket read failed");
+                _log.warning_P(PSTR("socket read failed"));
             }
 
             const uint32_t hi = word(packet[40], packet[41]);
@@ -73,7 +73,7 @@ void NtpClient::task()
 
             _systemClock.setUtcTime(epoch);
 
-            _log.info("finished, epoch: %ld", epoch);
+            _log.info_P(PSTR("finished, epoch: %ld"), epoch);
             _lastUpdate = _systemClock.utcTime();
             _state = State::Idle;
             _socket.reset();
@@ -85,16 +85,16 @@ void NtpClient::task()
 
 void NtpClient::setUpdatedCallback(UpdatedHandler&& handler)
 {
-    _log.debug("setting Updated callback");
+    _log.debug_P(PSTR("setting Updated callback"));
     _updatedHandler = std::move(handler);
 }
 
 void NtpClient::sendPacket()
 {
-    _log.debug("sending NTP packet");
+    _log.debug_P(PSTR("sending NTP packet"));
 
     if (!_socket) {
-        _log.error("socket is null");
+        _log.error_P(PSTR("socket is null"));
         return;
     }
 
@@ -109,15 +109,15 @@ void NtpClient::sendPacket()
     packet[15]  = 52;
 
     if (!_socket->beginPacket(Server, 123)) {
-        _log.warning("cannot send NTP packet, beginPacket() failed");
+        _log.warning_P(PSTR("cannot send NTP packet, beginPacket() failed"));
         return;
     }
 
     if (!_socket->write(packet, sizeof(packet))) {
-        _log.warning("cannot write NTP packet to the socket");
+        _log.warning_P(PSTR("cannot write NTP packet to the socket"));
     }
 
     if (!_socket->endPacket()) {
-        _log.warning("cannot sent NTP packet, endPacket() failed");
+        _log.warning_P(PSTR("cannot sent NTP packet, endPacket() failed"));
     }
 }

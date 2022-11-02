@@ -213,17 +213,17 @@ uint8_t MCP7940N::toBcd(uint8_t value)
 uint8_t MCP7940N::write(uint8_t address, const uint8_t* buffer, uint8_t length)
 {
     if (!I2C::start(ControlByte, I2C::Operation::Write)) {
-        _log.error("write() start error: cannot start transfer");
+        _log.error_P(PSTR("write() start error: cannot start transfer"));
         return 0; // TODO use boolean return value
     }
 
     if (!I2C::write(&address, sizeof(address))) {
-        _log.error("write() register write error: cannot write register address");
+        _log.error_P(PSTR("write() register write error: cannot write register address"));
         return 0;
     }
 
     if (!I2C::write(buffer, length)) {
-        _log.error("write() write error: cannot write data");
+        _log.error_P(PSTR("write() write error: cannot write data"));
         return 0;
     }
 
@@ -245,12 +245,12 @@ bool MCP7940N::write(const Register reg, uint8_t value)
 uint8_t MCP7940N::read(uint8_t address, uint8_t* buffer, uint8_t length)
 {
     if (!I2C::write(ControlByte, &address, sizeof(address))) {
-        _log.error("read() write error: cannot start transfer");
+        _log.error_P(PSTR("read() write error: cannot start transfer"));
         return 0;
     }
 
     if (!I2C::read(ControlByte, buffer, length)) {
-        _log.error("read() read error: cannot read data");
+        _log.error_P(PSTR("read() read error: cannot read data"));
         return 0;
     }
 

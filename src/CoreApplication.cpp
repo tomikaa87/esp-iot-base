@@ -301,7 +301,7 @@ void CoreApplication::Private::setupArduinoOta()
     if (appConfig.otaUpdate.arduinoOtaPasswordHash) {
         ArduinoOTA.setPasswordHash(appConfig.otaUpdate.arduinoOtaPasswordHash);
     } else {
-        log.warning("no password hash set for Arduino OTA");
+        log.warning_P(PSTR("no password hash set for Arduino OTA"));
     }
 
     ArduinoOTA.onStart([this] {
@@ -312,7 +312,7 @@ void CoreApplication::Private::setupArduinoOta()
             type = "file system";
         }
 
-        log.info("ArduinoOTA: starting update, type=%s", type);
+        log.info_P(PSTR("ArduinoOTA: starting update, type=%s"), type);
 
         if (arduinoOtaEventHandler) {
             arduinoOtaEventHandler(
@@ -324,7 +324,7 @@ void CoreApplication::Private::setupArduinoOta()
     });
 
     ArduinoOTA.onEnd([this] {
-        log.info("ArduinoOTA: ended");
+        log.info_P(PSTR("ArduinoOTA: ended"));
 
         if (arduinoOtaEventHandler) {
             arduinoOtaEventHandler(ArduinoOtaEvent::Ended);
@@ -375,7 +375,7 @@ void CoreApplication::Private::setupArduinoOta()
                 break;
         }
 
-        log.error("ArduinoOTA: update failed, error: %s", errorStr);
+        log.error_P(PSTR("ArduinoOTA: update failed, error: %s"), errorStr);
     });
 
     ArduinoOTA.begin();
@@ -388,7 +388,7 @@ void CoreApplication::Private::setupSerialPort()
 
 void CoreApplication::Private::setupWiFiStation()
 {
-    log.info("Setting up WiFi station: SSID=%s", appConfig.wifi.ssid);
+    log.info_P(PSTR("Setting up WiFi station: SSID=%s"), appConfig.wifi.ssid);
 
     WiFi.mode(WIFI_STA);
     WiFi.setAutoConnect(true);
@@ -402,7 +402,7 @@ void CoreApplication::Private::setupWiFiStation()
 
 void CoreApplication::Private::setupEpochTimer()
 {
-    log.info("Setting up Timer1 as epoch timer");
+    log.info_P(PSTR("Setting up Timer1 as epoch timer"));
 
     timer1_isr_init();
     timer1_attachInterrupt(CoreApplication::Private::epochTimerIsr);
@@ -412,7 +412,7 @@ void CoreApplication::Private::setupEpochTimer()
 
 void CoreApplication::Private::setupFileSystem()
 {
-    log.info("Setting up file system");
+    log.info_P(PSTR("Setting up file system"));
 
     LittleFS.begin();
 }

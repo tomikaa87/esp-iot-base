@@ -28,15 +28,15 @@ EeramPersistence::EeramPersistence(const uint32_t baseAddress, const size_t size
     : _baseAddress{ baseAddress }
     , _size{ size }
 {
-    _log.debug("creating: baseAddress=%u, size=%u", _baseAddress, size);
+    _log.debug_P(PSTR("creating: baseAddress=%u, size=%u"), _baseAddress, size);
 }
 
 bool EeramPersistence::allocate(const uint32_t address, size_t size)
 {
-    _log.debug("allocating: address=%u, size=%u", address, size);
+    _log.debug_P(PSTR("allocating: address=%u, size=%u"), address, size);
 
     if (_baseAddress < 0 || address < 0 || _baseAddress + address + size >= _size) {
-        _log.error("allocation failed, address or size too large");
+        _log.error_P(PSTR("allocation failed, address or size too large"));
         return false;
     }
 
@@ -45,21 +45,21 @@ bool EeramPersistence::allocate(const uint32_t address, size_t size)
 
 bool EeramPersistence::write(const uint32_t address, const uint8_t* data, const size_t size)
 {
-    _log.debug("writing: address=%u, size=%u, data=%p", address, size, data);
+    _log.debug_P(PSTR("writing: address=%u, size=%u, data=%p"), address, size, data);
 
     if (_baseAddress < 0 || address < 0 || _baseAddress + address + size >= _size) {
-        _log.error("write failed, address or size too large");
+        _log.error_P(PSTR("write failed, address or size too large"));
         return false;
     }
 
     const auto ok = Drivers::EERAM::write(_baseAddress + address, data, size);
     if (!ok) {
-        _log.error("write failed, communication error");
+        _log.error_P(PSTR("write failed, communication error"));
         return false;
     }
 
     if (!Drivers::EERAM::getStatus().ase) {
-        _log.debug("enabling ASE");
+        _log.debug_P(PSTR("enabling ASE"));
         Drivers::EERAM::setAseEnabled(true);
     }
 
@@ -68,16 +68,16 @@ bool EeramPersistence::write(const uint32_t address, const uint8_t* data, const 
 
 bool EeramPersistence::read(const uint32_t address, uint8_t* data, const size_t size)
 {
-    _log.debug("reading: address=%u, size=%u, data=%p", address, size, data);
+    _log.debug_P(PSTR("reading: address=%u, size=%u, data=%p"), address, size, data);
 
     if (_baseAddress < 0 || address < 0 || _baseAddress + address + size >= _size) {
-        _log.error("write failed, address or size too large");
+        _log.error_P(PSTR("write failed, address or size too large"));
         return false;
     }
 
     const auto ok = Drivers::EERAM::read(_baseAddress + address, data, size);
     if (!ok) {
-        _log.error("read failed, communication error");
+        _log.error_P(PSTR("read failed, communication error"));
         return false;
     }
 

@@ -353,7 +353,7 @@ bool BlynkHandler::isConnected() const
 
 void BlynkHandler::onConnected()
 {
-    _log.debug("connected");
+    _log.debug_P(PSTR("connected"));
 
     if (_connectedHandler) {
         _connectedHandler();
@@ -362,7 +362,7 @@ void BlynkHandler::onConnected()
 
 void BlynkHandler::onDisconnected()
 {
-    _log.debug("disconnected");
+    _log.debug_P(PSTR("disconnected"));
 
     if (_disconnectedHandler) {
         _disconnectedHandler();
@@ -373,57 +373,57 @@ void BlynkHandler::onVirtualPinWritten(const int pin, const BlynkParam& param)
 {
     const auto startMicros = micros();
 
-    _log.debug("virtual pin written: pin=%d", pin);
+    _log.debug_P(PSTR("virtual pin written: pin=%d"), pin);
 
     if (_genericPinWrittenHandler) {
-        _log.debug("calling generic pin written handler: pin=%d", pin);
+        _log.debug_P(PSTR("calling generic pin written handler: pin=%d"), pin);
         _genericPinWrittenHandler(pin, toVariant(param));
     }
 
     const auto& tiphIt = _timeInputPinHandlers.find(pin);
     if (tiphIt != std::end(_timeInputPinHandlers)) {
-        _log.debug("calling time input pin handler: pin=%d", pin);
+        _log.debug_P(PSTR("calling time input pin handler: pin=%d"), pin);
         TimeInputParam p{ param };
         tiphIt->second(pin, param);
     }
 
     const auto& pwhIt = _pinWrittenHandlers.find(pin);
     if (pwhIt != std::end(_pinWrittenHandlers)) {
-        _log.debug("calling specific pin handler: pin=%d", pin);
+        _log.debug_P(PSTR("calling specific pin handler: pin=%d"), pin);
         pwhIt->second(pin, toVariant(param));
     }
 
     const auto elapsedMicros = micros() - startMicros;
 
-    _log.debug("virtual pin write handling took %d us: pin=%d", elapsedMicros, pin);
+    _log.debug_P(PSTR("virtual pin write handling took %d us: pin=%d"), elapsedMicros, pin);
 }
 
 void BlynkHandler::onVirtualPinRead(const int pin)
 {
     const auto startMicros = micros();
 
-    _log.debug("virtual pin read: pin=%d", pin);
+    _log.debug_P(PSTR("virtual pin read: pin=%d"), pin);
 
     if (_genericPinReadHandler) {
-        _log.debug("calling generic pin read handler: pin=%d", pin);
+        _log.debug_P(PSTR("calling generic pin read handler: pin=%d"), pin);
         writeVariant(pin, _genericPinReadHandler(pin));
     }
 
     const auto& prhIt = _pinReadHandlers.find(pin);
     if (prhIt != std::end(_pinReadHandlers)) {
-        _log.debug("calling specific pin read handler: pin=%d", pin);
+        _log.debug_P(PSTR("calling specific pin read handler: pin=%d"), pin);
         writeVariant(pin, prhIt->second(pin));
     }
 
     const auto& sprhIt = _simplePinReadHandlers.find(pin);
     if (sprhIt != std::end(_simplePinReadHandlers)) {
-        _log.debug("calling simple pin read handler: pin=%d", pin);
+        _log.debug_P(PSTR("calling simple pin read handler: pin=%d"), pin);
         sprhIt->second(pin);
     }
 
     const auto elapsedMicros = micros() - startMicros;
 
-    _log.debug("virtual pin read handling took %d us: pin=%d", elapsedMicros, pin);
+    _log.debug_P(PSTR("virtual pin read handling took %d us: pin=%d"), elapsedMicros, pin);
 }
 
 void BlynkHandler::setConnectedHandler(ConnectedHandler&& handler)
