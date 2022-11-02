@@ -60,7 +60,9 @@ struct CoreApplication::Private
 #ifdef IOT_ENABLE_BLYNK
         , blynk(appConfig)
 #endif
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
         , otaUpdater(appConfig, systemClock)
+#endif
 #ifdef IOT_ENABLE_PERSISTENCE
         , settingsPersistence(
             appConfig.persistence.BaseAddress,
@@ -111,7 +113,11 @@ struct CoreApplication::Private
 #ifdef IOT_ENABLE_BLYNK
     BlynkHandler blynk;
 #endif
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
     OtaUpdater otaUpdater;
+    bool updateChecked = false;
+    uint32_t updateCheckTimer = 0;
+#endif
 #ifdef IOT_PERSISTENCE_USE_EERAM
     EeramPersistence settingsPersistence;
 #endif
@@ -123,9 +129,6 @@ struct CoreApplication::Private
 #endif
 
     WiFiWatchdog wifiWatchdog;
-
-    bool updateChecked = false;
-    uint32_t updateCheckTimer = 0;
 
     static constexpr auto SlowLoopUpdateIntervalMs = 500;
     uint32_t lastSlowLoopUpdate = 0;
@@ -173,7 +176,9 @@ void CoreApplication::task()
     _p->systemClock.task();
     _p->ntpClient.task();
 
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
     _p->otaUpdater.task();
+#endif
 #ifdef IOT_ENABLE_PERSISTENCE
     _p->settings.task();
 #endif
@@ -215,10 +220,12 @@ void CoreApplication::task()
     if (_p->lastSlowLoopUpdate == 0 || currentTime - _p->lastSlowLoopUpdate >= Private::SlowLoopUpdateIntervalMs) {
         _p->lastSlowLoopUpdate = currentTime;
 
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
         if (!_p->updateChecked && _p->wifiWatchdog.isConnected() && currentTime - _p->updateCheckTimer >= 5000) {
             _p->updateChecked = true;
             _p->otaUpdater.forceUpdate();
         }
+#endif
     }
 
 #ifdef IOT_ENABLE_BLYNK

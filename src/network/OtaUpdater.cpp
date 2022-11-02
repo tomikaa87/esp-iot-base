@@ -18,6 +18,8 @@
     Created on 2020-08-02
 */
 
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
+
 #include "OtaUpdater.h"
 #include "SystemClock.h"
 
@@ -243,3 +245,5 @@ std::string OtaUpdater::getFwUpdateUrl() const
 
     return url;
 }
+
+#endif

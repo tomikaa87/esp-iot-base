@@ -18,6 +18,8 @@
     Created on 2020-08-02
 */
 
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
+
 #pragma once
 
 #include "ApplicationConfig.h"
@@ -88,3 +90,5 @@ private:
 
     std::string getFwUpdateUrl() const;
 };
+
+#endif
