@@ -5,6 +5,7 @@
 #include <PubSubClient.h>
 #include <WiFiClient.h>
 
+#include <queue>
 #include <vector>
 
 #include <pgmspace.h>
@@ -19,7 +20,8 @@ public:
 
     void task();
 
-    bool publish(PGM_P topic, const std::string& payload);
+    bool publish(PGM_P topic, const std::string& payload, bool dropWhenNotConnected = true);
+    bool publish(const std::string& topic, const std::string& payload, bool dropWhenNotConnected = true);
 
     void subscribe(PGM_P topic, MqttVariableBase* base);
     void unsubscribe(PGM_P topic, MqttVariableBase* base);
@@ -43,6 +45,7 @@ private:
 
     std::vector<Variable> _variables;
     std::vector<std::string> _pendingUnSubscriptions;
+    std::queue<std::pair<std::string, std::string>> _pendingPublishes;
 
     void onClientCallback(const char* topic, const uint8_t* payload, const unsigned int length);
 };

@@ -66,8 +66,10 @@ struct ApplicationConfig
     struct OtaUpdate
     {
         uint16_t arduinoOtaPort = 8266;
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
         uint32_t updateCheckIntervalMs = 5000;
         const char* updateUrl = "";
+#endif
         const char* arduinoOtaPasswordHash = nullptr;
     };
 

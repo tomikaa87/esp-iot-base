@@ -37,10 +37,10 @@ public:
     VersionNumber& operator=(const VersionNumber&) = default;
     VersionNumber& operator=(VersionNumber&&) = default;
 
-    bool operator==(const VersionNumber& v) const;
-    bool operator!=(const VersionNumber& v) const;
-    bool operator<(const VersionNumber& v) const;
-    bool operator>(const VersionNumber& v) const;
+    bool operator==(const VersionNumber& other) const;
+    bool operator!=(const VersionNumber& other) const;
+    bool operator<(const VersionNumber& other) const;
+    bool operator>(const VersionNumber& other) const;
 
 private:
     // This overly verbose initialization is needed for xtensa gcc

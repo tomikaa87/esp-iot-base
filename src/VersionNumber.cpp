@@ -42,30 +42,28 @@ std::string VersionNumber::toString() const
     return s;
 }
 
-bool VersionNumber::operator==(const VersionNumber& v) const
+bool VersionNumber::operator==(const VersionNumber& other) const
 {
-    return _parts == v._parts;
+    return _parts == other._parts;
 }
 
-bool VersionNumber::operator!=(const VersionNumber& v) const
+bool VersionNumber::operator!=(const VersionNumber& other) const
 {
-    return !(*this == v);
+    return !(*this == other);
 }
 
-// FIXME this algorithm considers 1.4.1 to be less than 1.2.15
-
-bool VersionNumber::operator<(const VersionNumber& v) const
+bool VersionNumber::operator<(const VersionNumber& other) const
 {
     for (auto i = 0u; i < _parts.size(); ++i) {
-        if (_parts[i] < v._parts[i]) {
-            return true;
+        if (_parts[i] > other._parts[i]) {
+            return false;
         }
     }
 
-    return false;
+    return true;
 }
 
-bool VersionNumber::operator>(const VersionNumber& v) const
+bool VersionNumber::operator>(const VersionNumber& other) const
 {
-    return !(*this == v) && !(*this < v);
+    return !(*this == other) && !(*this < other);
 }

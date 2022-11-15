@@ -45,12 +45,12 @@ bool EERAM::read(const uint16_t address, uint8_t* const buffer, const uint16_t l
     };
 
     if (!I2C::write(ControlBytes::SramAccess, addrBuf, sizeof(addrBuf))) {
-        _log.error("read error: cannot start transfer");
+        _log.error_P(PSTR("read error: cannot start transfer"));
         return false;
     }
 
     if (!I2C::read(ControlBytes::SramAccess, buffer, length)) {
-        _log.error("read error: cannot read data");
+        _log.error_P(PSTR("read error: cannot read data"));
         return false;
     }
 
@@ -60,7 +60,7 @@ bool EERAM::read(const uint16_t address, uint8_t* const buffer, const uint16_t l
 bool EERAM::write(uint16_t address, const uint8_t* data, uint16_t length)
 {
     if (!I2C::start(ControlBytes::SramAccess, I2C::Operation::Write)) {
-        _log.error("write error: cannot start transfer");
+        _log.error_P(PSTR("write error: cannot start transfer"));
         return false;
     }
 
@@ -70,12 +70,12 @@ bool EERAM::write(uint16_t address, const uint8_t* data, uint16_t length)
     };
 
     if (!I2C::write(addrBuf, sizeof(addrBuf))) {
-        _log.error("write error: cannot write register address");
+        _log.error_P(PSTR("write error: cannot write register address"));
         return false;
     }
 
     if (!I2C::write(data, length)) {
-        _log.error("write error: cannot write data");
+        _log.error_P(PSTR("write error: cannot write data"));
         return false;
     }
 
@@ -87,17 +87,17 @@ bool EERAM::write(uint16_t address, const uint8_t* data, uint16_t length)
 void EERAM::writeControlReg(Register reg, uint8_t value)
 {
     if (!I2C::start(ControlBytes::ControlRegAccess, I2C::Operation::Write)) {
-        _log.error("control register write error: cannot start transfer");
+        _log.error_P(PSTR("control register write error: cannot start transfer"));
         return;
     }
 
     if (!I2C::write(reinterpret_cast<const uint8_t*>(&reg), 1)) {
-        _log.error("control register write error: cannot write register address");
+        _log.error_P(PSTR("control register write error: cannot write register address"));
         return;
     }
 
     if (!I2C::write(&value, 1)) {
-        _log.error("control register write error: cannot write value");
+        _log.error_P(PSTR("control register write error: cannot write value"));
         return;
     }
 
@@ -111,7 +111,7 @@ EERAM::StatusReg EERAM::getStatus()
 {
     StatusReg sr;
     if (!I2C::read(ControlBytes::ControlRegAccess, reinterpret_cast<uint8_t*>(&sr.value), sizeof(sr))) {
-        _log.error("get status error: cannot read control register");
+        _log.error_P(PSTR("get status error: cannot read control register"));
     }
 
     return sr;
@@ -124,7 +124,7 @@ void EERAM::setStatus(StatusReg sr)
 
 void EERAM::setAseEnabled(const bool enabled)
 {
-    _log.debug("setting ASE to %s", enabled ? "enabled" : "disabled");
+    _log.debug_P(PSTR("setting ASE to %s"), enabled ? "enabled" : "disabled");
 
     StatusReg sr;
     sr.value = 0;

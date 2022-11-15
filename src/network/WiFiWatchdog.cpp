@@ -36,7 +36,7 @@ void WiFiWatchdog::task()
                 break;
             }
 
-            _log.debug("WaitingForInitialConnect -> Connected");
+            _log.debug_P(PSTR("WaitingForInitialConnect -> Connected"));
 
             _state = State::Connected;
 
@@ -48,7 +48,7 @@ void WiFiWatchdog::task()
                 break;
             }
 
-            _log.debug("Connected -> WaitingForReconnect");
+            _log.debug_P(PSTR("Connected -> WaitingForReconnect"));
 
             _state = State::WaitingForReconnect;
             _reconnectTimer = millis();
@@ -58,7 +58,7 @@ void WiFiWatchdog::task()
 
         case State::WaitingForReconnect: {
             if (WiFi.isConnected()) {
-                _log.debug("WaitingForReconnect -> Connected");
+                _log.debug_P(PSTR("WaitingForReconnect -> Connected"));
 
                 _state = State::Connected;
 
@@ -66,10 +66,10 @@ void WiFiWatchdog::task()
             }
 
             if (millis() - _reconnectTimer > ReconnectTimeoutMs) {
-                _log.debug("automatic reconnect timed out, forcing manual");
+                _log.debug_P(PSTR("automatic reconnect timed out, forcing manual"));
 
                 if (!WiFi.reconnect()) {
-                    _log.warning("manual reconnect failed");
+                    _log.warning_P(PSTR("manual reconnect failed"));
                 }
 
                 _reconnectTimer = millis();

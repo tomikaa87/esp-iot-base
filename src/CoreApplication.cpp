@@ -60,7 +60,9 @@ struct CoreApplication::Private
 #ifdef IOT_ENABLE_BLYNK
         , blynk(appConfig)
 #endif
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
         , otaUpdater(appConfig, systemClock)
+#endif
 #ifdef IOT_ENABLE_PERSISTENCE
         , settingsPersistence(
             appConfig.persistence.BaseAddress,
@@ -111,7 +113,11 @@ struct CoreApplication::Private
 #ifdef IOT_ENABLE_BLYNK
     BlynkHandler blynk;
 #endif
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
     OtaUpdater otaUpdater;
+    bool updateChecked = false;
+    uint32_t updateCheckTimer = 0;
+#endif
 #ifdef IOT_PERSISTENCE_USE_EERAM
     EeramPersistence settingsPersistence;
 #endif
@@ -123,9 +129,6 @@ struct CoreApplication::Private
 #endif
 
     WiFiWatchdog wifiWatchdog;
-
-    bool updateChecked = false;
-    uint32_t updateCheckTimer = 0;
 
     static constexpr auto SlowLoopUpdateIntervalMs = 500;
     uint32_t lastSlowLoopUpdate = 0;
@@ -173,7 +176,9 @@ void CoreApplication::task()
     _p->systemClock.task();
     _p->ntpClient.task();
 
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
     _p->otaUpdater.task();
+#endif
 #ifdef IOT_ENABLE_PERSISTENCE
     _p->settings.task();
 #endif
@@ -215,10 +220,12 @@ void CoreApplication::task()
     if (_p->lastSlowLoopUpdate == 0 || currentTime - _p->lastSlowLoopUpdate >= Private::SlowLoopUpdateIntervalMs) {
         _p->lastSlowLoopUpdate = currentTime;
 
+#ifdef IOT_ENABLE_HTTP_OTA_UPDATE
         if (!_p->updateChecked && _p->wifiWatchdog.isConnected() && currentTime - _p->updateCheckTimer >= 5000) {
             _p->updateChecked = true;
             _p->otaUpdater.forceUpdate();
         }
+#endif
     }
 
 #ifdef IOT_ENABLE_BLYNK
@@ -289,7 +296,7 @@ void CoreApplication::setMqttUpdateHandler(MqttUpdateHandler&& handler)
 }
 #endif
 
-void ICACHE_RAM_ATTR CoreApplication::Private::epochTimerIsr()
+void IRAM_ATTR CoreApplication::Private::epochTimerIsr()
 {
     if (instance) {
         instance->systemClock.timerIsr();
@@ -301,7 +308,7 @@ void CoreApplication::Private::setupArduinoOta()
     if (appConfig.otaUpdate.arduinoOtaPasswordHash) {
         ArduinoOTA.setPasswordHash(appConfig.otaUpdate.arduinoOtaPasswordHash);
     } else {
-        log.warning("no password hash set for Arduino OTA");
+        log.warning_P(PSTR("no password hash set for Arduino OTA"));
     }
 
     ArduinoOTA.onStart([this] {
@@ -312,7 +319,7 @@ void CoreApplication::Private::setupArduinoOta()
             type = "file system";
         }
 
-        log.info("ArduinoOTA: starting update, type=%s", type);
+        log.info_P(PSTR("ArduinoOTA: starting update, type=%s"), type);
 
         if (arduinoOtaEventHandler) {
             arduinoOtaEventHandler(
@@ -324,7 +331,7 @@ void CoreApplication::Private::setupArduinoOta()
     });
 
     ArduinoOTA.onEnd([this] {
-        log.info("ArduinoOTA: ended");
+        log.info_P(PSTR("ArduinoOTA: ended"));
 
         if (arduinoOtaEventHandler) {
             arduinoOtaEventHandler(ArduinoOtaEvent::Ended);
@@ -375,7 +382,7 @@ void CoreApplication::Private::setupArduinoOta()
                 break;
         }
 
-        log.error("ArduinoOTA: update failed, error: %s", errorStr);
+        log.error_P(PSTR("ArduinoOTA: update failed, error: %s"), errorStr);
     });
 
     ArduinoOTA.begin();
@@ -388,7 +395,7 @@ void CoreApplication::Private::setupSerialPort()
 
 void CoreApplication::Private::setupWiFiStation()
 {
-    log.info("Setting up WiFi station: SSID=%s", appConfig.wifi.ssid);
+    log.info_P(PSTR("Setting up WiFi station: SSID=%s"), appConfig.wifi.ssid);
 
     WiFi.mode(WIFI_STA);
     WiFi.setAutoConnect(true);
@@ -402,7 +409,7 @@ void CoreApplication::Private::setupWiFiStation()
 
 void CoreApplication::Private::setupEpochTimer()
 {
-    log.info("Setting up Timer1 as epoch timer");
+    log.info_P(PSTR("Setting up Timer1 as epoch timer"));
 
     timer1_isr_init();
     timer1_attachInterrupt(CoreApplication::Private::epochTimerIsr);
@@ -412,7 +419,7 @@ void CoreApplication::Private::setupEpochTimer()
 
 void CoreApplication::Private::setupFileSystem()
 {
-    log.info("Setting up file system");
+    log.info_P(PSTR("Setting up file system"));
 
     LittleFS.begin();
 }
