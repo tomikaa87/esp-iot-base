@@ -3,6 +3,7 @@
 #include "MqttClient.h"
 #include "MqttVariableBase.h"
 
+#include <ctime>
 #include <string>
 #include <type_traits>
 
@@ -45,6 +46,12 @@ template <>
 inline std::string from_payload<std::string>(const std::string& payload)
 {
     return payload;
+}
+
+template <>
+inline std::time_t from_payload<std::time_t>(const std::string& payload)
+{
+    return strtoll(payload.c_str(), nullptr, 10);
 }
 
 inline std::string to_string(const std::string& payload)
