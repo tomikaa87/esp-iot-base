@@ -5,6 +5,7 @@
 #include <PubSubClient.h>
 #include <WiFiClient.h>
 
+#include <functional>
 #include <queue>
 #include <vector>
 
@@ -22,9 +23,15 @@ public:
 
     bool publish(PGM_P topic, const std::string& payload, bool dropWhenNotConnected = true);
     bool publish(const std::string& topic, const std::string& payload, bool dropWhenNotConnected = true);
+    
+    using StringGenerator = std::function<std::string()>;
+    
+    bool publish(StringGenerator&& topic, StringGenerator&& payload);
 
-    void subscribe(PGM_P topic, MqttVariableBase* base);
-    void unsubscribe(PGM_P topic, MqttVariableBase* base);
+    // void subscribe(PGM_P topic, MqttVariableBase* base);
+    void subscribeToCommandTopic(MqttVariableBase* base);
+    // void unsubscribe(PGM_P topic, MqttVariableBase* base);
+    void unsubscribeFromCommandTopic(MqttVariableBase* base);
 
 private:
     const ApplicationConfig& _appConfig;
@@ -32,20 +39,11 @@ private:
     WiFiClient _wifiClient;
     PubSubClient _client;
     unsigned long _lastConnectAttemptTime = 0;
-    
-    struct Variable {
-        Variable(PGM_P topic, MqttVariableBase* base)
-            : topic(topic)
-            , base(base)
-        {}
 
-        PGM_P topic = nullptr;
-        MqttVariableBase* base = nullptr;
-    };
-
-    std::vector<Variable> _variables;
+    std::vector<MqttVariableBase*> _variables;
     std::vector<std::string> _pendingUnSubscriptions;
     std::queue<std::pair<std::string, std::string>> _pendingPublishes;
+    std::queue<std::pair<StringGenerator, StringGenerator>> _pendingGenerators;
 
     void onClientCallback(const char* topic, const uint8_t* payload, const unsigned int length);
 };

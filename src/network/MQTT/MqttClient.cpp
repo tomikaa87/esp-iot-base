@@ -44,7 +44,7 @@ void MqttClient::task()
                 _log.info_P(PSTR("connected"));
 
                 for (auto& v : _variables) {
-                    const auto topic = Utils::pgmToStdString(v.topic);
+                    const auto topic = v->commandTopic();
                     if (_client.subscribe(topic.c_str())) {
                         _log.debug_P(PSTR("successfully subscribed: topic=%s"), topic.c_str());
                     }
@@ -59,9 +59,9 @@ void MqttClient::task()
                     }
                 }
 
-                for (auto& v : _variables) {
-                    if (v.base->needsPublishing()) {
-                        v.base->publish();
+                for (auto* v : _variables) {
+                    if (v->needsPublishing()) {
+                        v->publish();
                     }
                 }
 
@@ -72,6 +72,22 @@ void MqttClient::task()
 
                     if (_client.publish(p.first.c_str(), p.second.c_str(), true)) {
                         _pendingPublishes.pop();
+                    } else {
+                        _log.warning_P(PSTR("task: failed to publish pending item"));
+                        break;
+                    }
+                }
+
+                while (!_pendingGenerators.empty()) {
+                    const auto& p = _pendingGenerators.front();
+
+                    const auto topic = p.first();
+                    const auto payload = p.second();
+
+                    _log.debug_P(PSTR("task: publishing pending item, topic=%s, payload=%s"), topic.c_str(), payload.c_str());
+
+                    if (_client.publish(topic.c_str(), payload.c_str(), true)) {
+                        _pendingGenerators.pop();
                     } else {
                         _log.warning_P(PSTR("task: failed to publish pending item"));
                         break;
@@ -106,35 +122,39 @@ bool MqttClient::publish(const std::string& topic, const std::string& payload, b
     }
 }
 
-void MqttClient::subscribe(PGM_P const topic, MqttVariableBase* const base)
+bool MqttClient::publish(StringGenerator&& topic, StringGenerator&& payload)
 {
-    const auto sTopic = Utils::pgmToStdString(topic);
-
-    _log.debug_P(PSTR("subscribe: topic=%s, base=%p"), sTopic.c_str(), base);
-
-    _variables.emplace_back(topic, base);
+    if (_client.connected()) {
+        return _client.publish(topic().c_str(), payload().c_str());
+    } else {
+        _pendingGenerators.emplace(std::move(topic), std::move(payload));
+        return false;
+    }
 }
 
-void MqttClient::unsubscribe(PGM_P const topic, MqttVariableBase* const base)
+void MqttClient::subscribeToCommandTopic(MqttVariableBase* base)
 {
-    auto sTopic = Utils::pgmToStdString(topic);
+    _log.debug_P(PSTR("subscribe: topic=%s, base=%p"), base->commandTopic().c_str(), base);
 
-    _log.debug_P(PSTR("unsubscribe: topic=%s, base=%p"), sTopic.c_str(), base);
+    _variables.emplace_back(base);
+}
+
+void MqttClient::unsubscribeFromCommandTopic(MqttVariableBase* base)
+{
+    _log.debug_P(PSTR("unsubscribe: topic=%s, base=%p"), base->commandTopic().c_str(), base);
 
     _variables.erase(
         std::remove_if(
             std::begin(_variables),
             std::end(_variables),
-            [&sTopic, base](const Variable& v) {
-                return
-                    strcasecmp_P(sTopic.c_str(), v.topic) == 0
-                    && v.base == base;
+            [base](const MqttVariableBase* v) {
+                return v == base;
             }
         ),
         std::end(_variables)
     );
 
-    _pendingUnSubscriptions.push_back(std::move(sTopic));
+    _pendingUnSubscriptions.push_back(std::move(base->commandTopic()));
 }
 
 void MqttClient::onClientCallback(const char* const topic, const uint8_t* const payload, const unsigned int length)
@@ -144,18 +164,18 @@ void MqttClient::onClientCallback(const char* const topic, const uint8_t* const 
     const auto variable = std::find_if(
         std::begin(_variables),
         std::end(_variables),
-        [topic](const Variable& v) {
-            return strcasecmp_P(topic, v.topic) == 0;
+        [topic](const MqttVariableBase* v) {
+            return v->commandTopic() == topic;
         }
     );
 
-    if (variable == std::end(_variables) || !variable->base) {
+    if (variable == std::end(_variables)) {
         return;
     }
 
-    _log.debug_P(PSTR("onClientCallback: updating variable, base=%p"), variable->base);
+    _log.debug_P(PSTR("onClientCallback: updating variable, base=%p"), variable);
 
-    variable->base->updateWithPayload(
+    (*variable)->updateWithPayload(
         std::string{ reinterpret_cast<const char*>(payload), length }
     );
 }

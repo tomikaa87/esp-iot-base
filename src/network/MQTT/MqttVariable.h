@@ -5,6 +5,7 @@
 
 #include <ctime>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include <pgmspace.h>
@@ -66,7 +67,7 @@ public:
     using ValueType = typename std::remove_reference<T>::type;
     using ChangedHandler = std::function<void (const ValueType& value)>;
 
-    MqttVariable(
+    explicit MqttVariable(
         PGM_P stateTopic,
         MqttClient& client,
         bool publishOnWrite = false
@@ -75,13 +76,34 @@ public:
         , _publishOnWrite(publishOnWrite)
     {}
 
-    MqttVariable(
+    explicit MqttVariable(
+        std::string_view topicPrefix,
+        PGM_P stateTopic,
+        MqttClient& client,
+        bool publishOnWrite = false
+    )
+        : MqttVariableBase(std::move(topicPrefix), stateTopic, client)
+        , _publishOnWrite(publishOnWrite)
+    {}
+
+    explicit MqttVariable(
         PGM_P stateTopic,
         PGM_P commandTopic,
         MqttClient& client,
         bool publishOnWrite = false
     )
         : MqttVariableBase(stateTopic, commandTopic, client)
+        , _publishOnWrite(publishOnWrite)
+    {}
+
+    explicit MqttVariable(
+        std::string_view topicPrefix,
+        PGM_P stateTopic,
+        PGM_P commandTopic,
+        MqttClient& client,
+        bool publishOnWrite = false
+    )
+        : MqttVariableBase(std::move(topicPrefix), stateTopic, commandTopic, client)
         , _publishOnWrite(publishOnWrite)
     {}
 
@@ -125,6 +147,6 @@ private:
     void publish() override
     {
         using namespace std;
-        _needsPublishing = !_client.publish(stateTopic(), to_string(_value));
+        _needsPublishing = !publishState(to_string(_value));
     }
 };

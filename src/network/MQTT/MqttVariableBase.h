@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 #include <pgmspace.h>
 
@@ -10,12 +11,25 @@ class MqttClient;
 class MqttVariableBase
 {
 public:
-    MqttVariableBase(
-        PGM_P pstrStateTopic,
+    explicit MqttVariableBase(
+        PGM_P stateTopic,
         MqttClient& client
     );
 
-    MqttVariableBase(
+    explicit MqttVariableBase(
+        std::string_view topicPrefix,
+        PGM_P stateTopic,
+        MqttClient& client
+    );
+
+    explicit MqttVariableBase(
+        PGM_P stateTopic,
+        PGM_P commandTopic,
+        MqttClient& client
+    );
+
+    explicit MqttVariableBase(
+        std::string_view topicPrefix,
         PGM_P stateTopic,
         PGM_P commandTopic,
         MqttClient& client
@@ -26,16 +40,18 @@ public:
     virtual void updateWithPayload(const std::string& payload) = 0;
     virtual void publish() = 0;
 
-    PGM_P stateTopic() const;
-    PGM_P commandTopic() const;
-
     bool needsPublishing() const;
 
+    std::string commandTopic() const;
+
 protected:
-    MqttClient& _client;
     bool _needsPublishing = false;
 
+    bool publishState(const std::string& payload);
+
 private:
+    MqttClient& _client;
     PGM_P const _stateTopic;
     PGM_P const _commandTopic = nullptr;
+    std::string_view _topicPrefix;
 };
