@@ -21,7 +21,6 @@
 #pragma once
 
 #include "ApplicationConfig.h"
-#include "IBlynkHandler.h"
 #include "ISettingsHandler.h"
 #include "ISystemClock.h"
 
@@ -34,10 +33,6 @@ class MqttClient;
 class CoreApplication
 {
 public:
-#ifdef IOT_ENABLE_BLYNK
-    using BlynkUpdateHandler = std::function<void ()>;
-#endif
-
 #ifdef IOT_ENABLE_MQTT
     using MqttUpdateHandler = std::function<void ()>;
 #endif
@@ -59,11 +54,6 @@ public:
     ~CoreApplication();
 
     void task();
-
-#ifdef IOT_ENABLE_BLYNK
-    IBlynkHandler& blynkHandler();
-    void setBlynkUpdateHandler(BlynkUpdateHandler&& handler);
-#endif
 
 #ifdef IOT_ENABLE_PERSISTENCE
     ISettingsHandler& settings();

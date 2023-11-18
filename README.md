@@ -4,7 +4,6 @@ This code is supposed to be a minimal base for an ESP8266-based IoT application 
 # Features
 
 * Easy-to-use MQTT client
-* Blynk integration
 * Over-the-Air (OTA) updates via:
   * ArduinoOTA (also with Flash/LittleFS support)
   * HTTP

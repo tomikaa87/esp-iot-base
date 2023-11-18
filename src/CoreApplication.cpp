@@ -38,9 +38,6 @@
 
 #include "drivers/SimpleI2C.h"
 
-#ifdef IOT_ENABLE_BLYNK
-#include "network/BlynkHandler.h"
-#endif
 #include "network/MQTT/MqttClient.h"
 #include "network/NtpClient.h"
 #include "network/OtaUpdater.h"
@@ -57,9 +54,6 @@ struct CoreApplication::Private
     )
         : appConfig(appConfig)
         , ntpClient(systemClock)
-#ifdef IOT_ENABLE_BLYNK
-        , blynk(appConfig)
-#endif
 #ifdef IOT_ENABLE_HTTP_OTA_UPDATE
         , otaUpdater(appConfig, systemClock)
 #endif
@@ -110,9 +104,6 @@ struct CoreApplication::Private
     const ApplicationConfig& appConfig;
     SystemClock systemClock;
     NtpClient ntpClient;
-#ifdef IOT_ENABLE_BLYNK
-    BlynkHandler blynk;
-#endif
 #ifdef IOT_ENABLE_HTTP_OTA_UPDATE
     OtaUpdater otaUpdater;
     bool updateChecked = false;
@@ -132,12 +123,6 @@ struct CoreApplication::Private
 
     static constexpr auto SlowLoopUpdateIntervalMs = 500;
     uint32_t lastSlowLoopUpdate = 0;
-
-#ifdef IOT_ENABLE_BLYNK
-    static constexpr auto BlynkUpdateIntervalMs = 1000;
-    uint32_t lastBlynkUpdate = 0;
-    BlynkUpdateHandler blynkUpdateHandler;
-#endif
 
     ArduinoOtaEventHandler arduinoOtaEventHandler;
 
@@ -187,33 +172,6 @@ void CoreApplication::task()
 
     const auto currentTime = millis();
 
-#ifdef IOT_ENABLE_BLYNK
-    // Blynk library tends to freeze if there is no WiFi connection.
-    // This is caused by an infinite loop in an connect() call in
-    // Blynk.run() if the NTP server is unreachable.
-    bool blynkTaskSucceeded = false;
-    bool blynkTaskCanRun = false;
-    if (_p->wifiWatchdog.isConnected()) {
-        // Check if system time is set before letting Blynk try to connect
-        if (_p->blynk.isConnected()) {
-            blynkTaskCanRun = true;
-        } else {
-            // There is a check in connect() which checks if current time
-            // is less than 100000
-            if (time(nullptr) >= 100000) {
-                blynkTaskCanRun = true;
-            } else {
-                // Time must be synchronized first. NtpClient and SystemClock
-                // will do that automatically if possible
-            }
-        }
-
-        if (blynkTaskCanRun) {
-            blynkTaskSucceeded = _p->blynk.task();
-        }
-    }
-#endif // IOT_ENABLE_BLYNK
-
     ArduinoOTA.handle();
 
     // Slow loop
@@ -228,17 +186,6 @@ void CoreApplication::task()
 #endif
     }
 
-#ifdef IOT_ENABLE_BLYNK
-    // Blynk update loop
-    if (_p->lastBlynkUpdate == 0 || currentTime - _p->lastBlynkUpdate >= Private::BlynkUpdateIntervalMs) {
-        _p->lastBlynkUpdate = currentTime;
-
-        if (blynkTaskSucceeded && _p->blynkUpdateHandler) {
-            _p->blynkUpdateHandler();
-        }
-    }
-#endif
-
 #ifdef IOT_ENABLE_MQTT
     // MQTT update loop
     if (_p->appConfig.mqtt.enabled && (_p->lastMqttUpdate == 0 || currentTime - _p->lastMqttUpdate >= Private::MqttUpdateIntervalMs)) {
@@ -250,13 +197,6 @@ void CoreApplication::task()
     }
 #endif
 }
-
-#ifdef IOT_ENABLE_BLYNK
-IBlynkHandler& CoreApplication::blynkHandler()
-{
-    return _p->blynk;
-}
-#endif
 
 #ifdef IOT_ENABLE_PERSISTENCE
 ISettingsHandler& CoreApplication::settings()
@@ -274,13 +214,6 @@ ISystemClock& CoreApplication::systemClock()
 MqttClient& CoreApplication::mqttClient()
 {
     return _p->mqttClient;
-}
-#endif
-
-#ifdef IOT_ENABLE_BLYNK
-void CoreApplication::setBlynkUpdateHandler(BlynkUpdateHandler&& handler)
-{
-    _p->blynkUpdateHandler = std::move(handler);
 }
 #endif
 

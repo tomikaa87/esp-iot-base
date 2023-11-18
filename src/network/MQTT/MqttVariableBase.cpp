@@ -75,7 +75,7 @@ std::string MqttVariableBase::commandTopic() const
     return topic;
 }
 
-bool MqttVariableBase::publishState(const std::string &payload)
+bool MqttVariableBase::publishState(const std::string& payload)
 {
     if (!_topicPrefix.empty()) {
         return _client.publish(
