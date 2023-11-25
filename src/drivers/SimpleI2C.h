@@ -101,7 +101,7 @@ public:
     static bool write(const uint8_t data, const bool sendStopOnError = true)
     {
 #ifdef SIMPLE_I2C_DEBUG
-        Serial.printf("<W:%u>", len);
+        Serial.printf("<W:1>");
 #endif
 
         if (!writeByte(data)) {

@@ -38,4 +38,15 @@ namespace Hash
         uint16_t _sum1 = 0;
         uint16_t _sum2 = 0;
     };
+
+    class Crc16
+    {
+    public:
+        void update(const uint8_t* data, size_t size);
+        void update(uint8_t data);
+        [[nodiscard]] uint16_t value() const;
+
+    private:
+        uint16_t _crc{ 0xFFFF };
+    };
 };

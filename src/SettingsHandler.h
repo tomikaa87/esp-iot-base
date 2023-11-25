@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "Hash.h"
 #include "ISettingsHandler.h"
 #include "ISettingsPersistence.h"
 #include "Logger.h"
@@ -28,6 +29,115 @@
 #include <cstdlib>
 #include <functional>
 #include <vector>
+
+template <typename ValueType>
+class Setting
+{
+    friend class SettingsHandler;
+
+public:
+    bool save() const
+    {
+        if (!_allocated) {
+            return false;
+        }
+
+        auto* data = reinterpret_cast<const uint8_t*>(&_value);
+
+        if (!_persistence.write(_address, data, sizeof(ValueType))) {
+            return false;
+        }
+
+        Hash::Crc16 crc;
+        crc.update(data, sizeof(ValueType));
+        const auto crcValue = crc.value();
+
+        if (
+            !_persistence.write(
+                _address + sizeof(ValueType),
+                reinterpret_cast<const uint8_t*>(&crcValue),
+                sizeof(crcValue)
+            )
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool load()
+    {
+        if (!_allocated) {
+            return false;
+        }
+
+        ValueType value{};
+
+        if (!
+            _persistence.read(
+                _address,
+                reinterpret_cast<uint8_t*>(&value),
+                sizeof(ValueType)
+            )
+        ) {
+            return false;
+        }
+
+        Hash::Crc16 crc;
+        crc.update(reinterpret_cast<const uint8_t*>(&value), sizeof(ValueType));
+
+        uint16_t crcValue{ 0xFFFF };
+
+        if (
+            !_persistence.read(
+                _address + sizeof(ValueType),
+                reinterpret_cast<uint8_t*>(&crcValue),
+                sizeof(crcValue)
+            )
+        ) {
+            return false;
+        }
+
+        crc.update(crcValue >> 8);
+        crc.update(crcValue & 0xFF);
+
+        if (crc.value() == 0) {
+            _value = value;
+            return true;
+        }
+
+        return false;
+    }
+
+    ValueType& value()
+    {
+        return _value;
+    }
+
+    const ValueType& value() const
+    {
+        return _value;
+    }
+
+private:
+    ValueType _value{};
+    std::size_t _address{};
+    ISettingsPersistence& _persistence;
+    bool _allocated{ false };
+
+    explicit Setting(
+        const std::size_t address,
+        ISettingsPersistence& persistence
+    )
+        : _address{ address }
+        , _persistence{ persistence }
+    {
+        _allocated = _persistence.allocate(
+            address,
+            sizeof(ValueType) + sizeof(uint16_t) /* CRC-16 */
+        );
+    }
+};
 
 class SettingsHandler : public ISettingsHandler
 {
@@ -41,9 +151,18 @@ public:
     void task();
 
     bool load() override;
-    bool save() override;
+    SaveResult save() override;
 
     void setDefaultsLoader(DefaultsLoader&& defaultsLoader) override;
+
+    template <typename ValueType>
+    Setting<ValueType> registerSetting()
+    {
+        auto address = _nextAddress;
+        _nextAddress += sizeof(ValueType);
+
+        return Setting<ValueType>{ address, _persistence };
+    }
 
 private:
     Logger _log{ "SettingsHandler" };

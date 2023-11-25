@@ -86,7 +86,7 @@ bool SettingsHandler::load()
     return true;
 }
 
-bool SettingsHandler::save()
+SettingsHandler::SaveResult SettingsHandler::save()
 {
     Hash::Fletcher16 hdrCksum;
     auto dataChanged = false;
@@ -98,7 +98,7 @@ bool SettingsHandler::save()
             s.checksum = checksum;
             dataChanged = true;
             if (!_persistence.write(s.address, s.ptr, s.size)) {
-                return false;
+                return SaveResult::Error;
             }
         }
     }
@@ -109,12 +109,13 @@ bool SettingsHandler::save()
         // Update the header
         _header.checksum = checksum;
         if (!_persistence.write(0, reinterpret_cast<uint8_t*>(&_header), sizeof(Header))) {
-            // log error
-            return false;
+            return SaveResult::Error;
         }
+
+        return SaveResult::Saved;
     }
 
-    return true;
+    return SaveResult::NoChange;
 }
 
 void SettingsHandler::setDefaultsLoader(SettingsHandler::DefaultsLoader&& defaultsLoader)

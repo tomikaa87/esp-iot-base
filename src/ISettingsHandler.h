@@ -31,6 +31,13 @@
 class ISettingsHandler
 {
 public:
+    enum class SaveResult
+    {
+        NoChange,
+        Saved,
+        Error
+    };
+
     template <typename T>
     bool registerSetting(T& setting)
     {
@@ -40,7 +47,7 @@ public:
     virtual bool registerSettingMemory(uint8_t* ptr, size_t size) = 0;
 
     virtual bool load() = 0;
-    virtual bool save() = 0;
+    virtual SaveResult save() = 0;
 
     enum class DefaultsLoadReason {
         ChecksumError,

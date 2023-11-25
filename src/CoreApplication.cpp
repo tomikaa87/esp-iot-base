@@ -154,6 +154,11 @@ CoreApplication::CoreApplication(const ApplicationConfig& appConfig)
 
 CoreApplication::~CoreApplication() = default;
 
+const ApplicationConfig& CoreApplication::config() const
+{
+    return _p->appConfig;
+}
+
 void CoreApplication::task()
 {
     _p->wifiWatchdog.task();
@@ -199,7 +204,7 @@ void CoreApplication::task()
 }
 
 #ifdef IOT_ENABLE_PERSISTENCE
-ISettingsHandler& CoreApplication::settings()
+SettingsHandler& CoreApplication::settings()
 {
     return _p->settings;
 }

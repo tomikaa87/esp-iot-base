@@ -20,7 +20,7 @@ MqttClient::MqttClient(const ApplicationConfig& appConfig)
 {
 
 #if defined IOT_ENABLE_MQTT_EXTRA_LARGE_BUFFER
-    _client.setBufferSize(1024);
+    _client.setBufferSize(1536);
 #elif defined IOT_ENABLE_MQTT_LARGE_BUFFER
     _client.setBufferSize(512);
 #endif

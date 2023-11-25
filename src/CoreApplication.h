@@ -21,7 +21,7 @@
 #pragma once
 
 #include "ApplicationConfig.h"
-#include "ISettingsHandler.h"
+#include "SettingsHandler.h"
 #include "ISystemClock.h"
 
 #include <memory>
@@ -53,10 +53,12 @@ public:
     CoreApplication(const ApplicationConfig& appConfig);
     ~CoreApplication();
 
+    const ApplicationConfig& config() const;
+
     void task();
 
 #ifdef IOT_ENABLE_PERSISTENCE
-    ISettingsHandler& settings();
+    SettingsHandler& settings();
 #endif
 
     ISystemClock& systemClock();
