@@ -36,6 +36,8 @@ class Setting
     friend class SettingsHandler;
 
 public:
+    static constexpr auto RequiredMemorySize = sizeof(ValueType) + sizeof(uint16_t);
+
     bool save() const
     {
         if (!_allocated) {
@@ -134,7 +136,7 @@ private:
     {
         _allocated = _persistence.allocate(
             address,
-            sizeof(ValueType) + sizeof(uint16_t) /* CRC-16 */
+            RequiredMemorySize
         );
     }
 };
@@ -159,7 +161,7 @@ public:
     Setting<ValueType> registerSetting()
     {
         auto address = _nextAddress;
-        _nextAddress += sizeof(ValueType);
+        _nextAddress += Setting<ValueType>::RequiredMemorySize;
 
         return Setting<ValueType>{ address, _persistence };
     }
