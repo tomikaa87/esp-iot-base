@@ -40,10 +40,6 @@ public:
 
     bool save() const
     {
-        if (!_allocated) {
-            return false;
-        }
-
         auto* data = reinterpret_cast<const uint8_t*>(&_value);
 
         if (!_persistence.write(_address, data, sizeof(ValueType))) {
@@ -69,10 +65,6 @@ public:
 
     bool load()
     {
-        if (!_allocated) {
-            return false;
-        }
-
         ValueType value{};
 
         if (!
@@ -134,10 +126,14 @@ private:
         : _address{ address }
         , _persistence{ persistence }
     {
-        _allocated = _persistence.allocate(
-            address,
-            RequiredMemorySize
-        );
+        if (
+            !_persistence.allocate(
+                address,
+                RequiredMemorySize
+            )
+        ) {
+            abort();
+        }
     }
 };
 
@@ -158,10 +154,17 @@ public:
     void setDefaultsLoader(DefaultsLoader&& defaultsLoader) override;
 
     template <typename ValueType>
-    Setting<ValueType> registerSetting()
+    Setting<ValueType> registerSetting(const size_t fixedSize = 0)
     {
+        const auto size = fixedSize > 0 ? fixedSize : Setting<ValueType>::RequiredMemorySize;
+
+        if (size < Setting<ValueType>::RequiredMemorySize) {
+            _log.error_P(PSTR("the specified fixed size is not enough to store the value"));
+            abort();
+        }
+
         auto address = _nextAddress;
-        _nextAddress += Setting<ValueType>::RequiredMemorySize;
+        _nextAddress += size;
 
         return Setting<ValueType>{ address, _persistence };
     }
