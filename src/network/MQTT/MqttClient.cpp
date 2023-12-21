@@ -45,6 +45,9 @@ void MqttClient::task()
 
                 for (auto& v : _variables) {
                     const auto topic = v->commandTopic();
+                    if (topic.empty()) {
+                        continue;
+                    }
                     if (_client.subscribe(topic.c_str())) {
                         _log.debug_P(PSTR("successfully subscribed: topic=%s"), topic.c_str());
                     }
@@ -132,16 +135,16 @@ bool MqttClient::publish(StringGenerator&& topic, StringGenerator&& payload)
     }
 }
 
-void MqttClient::subscribeToCommandTopic(MqttVariableBase* base)
+void MqttClient::registerVariable(MqttVariableBase* base)
 {
-    _log.debug_P(PSTR("subscribe: topic=%s, base=%p"), base->commandTopic().c_str(), base);
+    // _log.debug_P(PSTR("registerVariable: commandTopic=%s, base=%p"), base->commandTopic().c_str(), base);
 
     _variables.emplace_back(base);
 }
 
-void MqttClient::unsubscribeFromCommandTopic(MqttVariableBase* base)
+void MqttClient::unregisterVariable(MqttVariableBase* base)
 {
-    _log.debug_P(PSTR("unsubscribe: topic=%s, base=%p"), base->commandTopic().c_str(), base);
+    // _log.debug_P(PSTR("unregisterVariable: commandTopic=%s, base=%p"), base->commandTopic().c_str(), base);
 
     _variables.erase(
         std::remove_if(
@@ -154,7 +157,11 @@ void MqttClient::unsubscribeFromCommandTopic(MqttVariableBase* base)
         std::end(_variables)
     );
 
-    _pendingUnSubscriptions.push_back(std::move(base->commandTopic()));
+    auto commandTopic{ std::move(base->commandTopic()) };
+
+    if (!commandTopic.empty()) {
+        _pendingUnSubscriptions.push_back(std::move(commandTopic));
+    }
 }
 
 void MqttClient::onClientCallback(const char* const topic, const uint8_t* const payload, const unsigned int length)

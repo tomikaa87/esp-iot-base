@@ -29,9 +29,9 @@ public:
     bool publish(StringGenerator&& topic, StringGenerator&& payload);
 
     // void subscribe(PGM_P topic, MqttVariableBase* base);
-    void subscribeToCommandTopic(MqttVariableBase* base);
+    void registerVariable(MqttVariableBase* base);
     // void unsubscribe(PGM_P topic, MqttVariableBase* base);
-    void unsubscribeFromCommandTopic(MqttVariableBase* base);
+    void unregisterVariable(MqttVariableBase* base);
 
 private:
     const ApplicationConfig& _appConfig;

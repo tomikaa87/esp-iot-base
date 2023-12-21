@@ -45,7 +45,7 @@ public:
     std::string commandTopic() const;
 
 protected:
-    bool _needsPublishing = false;
+    bool _needsPublishing{ true };
 
     bool publishState(const std::string& payload);
 

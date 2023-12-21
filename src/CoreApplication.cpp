@@ -30,6 +30,7 @@
 
 #if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EEPROM)
 #include "EepromPersistence.h"
+#include <LittleFS.h>
 #endif
 
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
@@ -45,7 +46,6 @@
 
 #include <Arduino.h>
 #include <ArduinoOTA.h>
-#include <LittleFS.h>
 
 struct CoreApplication::Private
 {
@@ -77,8 +77,10 @@ struct CoreApplication::Private
         // WiFI
         setupWiFiStation();
 
+#if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EEPROM)
         // File system
         setupFileSystem();
+#endif
 
         // I2C bus
         Drivers::I2C::init();
@@ -355,12 +357,14 @@ void CoreApplication::Private::setupEpochTimer()
     timer1_write(100);
 }
 
+#if defined(IOT_ENABLE_PERSISTENCE) && defined (IOT_PERSISTENCE_USE_EEPROM)
 void CoreApplication::Private::setupFileSystem()
 {
     log.info_P(PSTR("Setting up file system"));
 
     LittleFS.begin();
 }
+#endif
 
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
 void CoreApplication::Private::setupRtcDigitalTrimming()

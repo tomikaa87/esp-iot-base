@@ -15,8 +15,7 @@ MqttVariableBase::MqttVariableBase(
     MqttClient &client
 )
     : MqttVariableBase(std::move(topicPrefix), stateTopic, nullptr, client)
-{
-}
+{}
 
 MqttVariableBase::MqttVariableBase(
     PGM_P stateTopic,
@@ -27,9 +26,7 @@ MqttVariableBase::MqttVariableBase(
     , _stateTopic(stateTopic)
     , _commandTopic(commandTopic)
 {
-    if (_commandTopic) {
-        _client.subscribeToCommandTopic(this);
-    }
+    _client.registerVariable(this);
 }
 
 MqttVariableBase::MqttVariableBase(
@@ -43,16 +40,12 @@ MqttVariableBase::MqttVariableBase(
     , _commandTopic(commandTopic)
     , _topicPrefix(std::move(topicPrefix))
 {
-    if (_commandTopic) {
-        _client.subscribeToCommandTopic(this);
-    }
+    _client.registerVariable(this);
 }
 
 MqttVariableBase::~MqttVariableBase()
 {
-    if (_commandTopic) {
-        _client.unsubscribeFromCommandTopic(this);
-    }
+    _client.unregisterVariable(this);
 }
 
 bool MqttVariableBase::needsPublishing() const
