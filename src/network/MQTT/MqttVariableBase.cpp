@@ -43,6 +43,36 @@ MqttVariableBase::MqttVariableBase(
     _client.registerVariable(this);
 }
 
+MqttVariableBase::MqttVariableBase(
+    PGM_P stateTopic,
+    PGM_P commandTopic,
+    const std::size_t index,
+    MqttClient& client
+)
+    : _client(client)
+    , _stateTopic(stateTopic)
+    , _commandTopic(commandTopic)
+    , _index{ index }
+{
+    _client.registerVariable(this);
+}
+
+MqttVariableBase::MqttVariableBase(
+    std::string_view topicPrefix,
+    PGM_P stateTopic,
+    PGM_P commandTopic,
+    const std::size_t index,
+    MqttClient &client
+)
+    : _client(client)
+    , _stateTopic(stateTopic)
+    , _commandTopic(commandTopic)
+    , _topicPrefix(std::move(topicPrefix))
+    , _index{ index }
+{
+    _client.registerVariable(this);
+}
+
 MqttVariableBase::~MqttVariableBase()
 {
     _client.unregisterVariable(this);
@@ -59,23 +89,31 @@ std::string MqttVariableBase::commandTopic() const
         return{};
     }
 
-    const auto topic = Utils::pgmToStdString(_commandTopic);
-
-    if (!_topicPrefix.empty()) {
-        return std::string{ _topicPrefix } + topic;
-    }
-
-    return topic;
+    return decorateTopicWithPrefixAndIndex(Utils::pgmToStdString(_commandTopic));
 }
 
 bool MqttVariableBase::publishState(const std::string& payload)
 {
+    return _client.publish(
+        decorateTopicWithPrefixAndIndex(Utils::pgmToStdString(_stateTopic)),
+        payload
+    );
+}
+
+std::string MqttVariableBase::decorateTopicWithPrefixAndIndex(const std::string& topic) const
+{
+    std::string result;
+    result.reserve(_topicPrefix.size() + topic.size() + 1 /* / */ + 11 /* INT_MAX+1 numbers */);
+
     if (!_topicPrefix.empty()) {
-        return _client.publish(
-            std::string{ _topicPrefix } + Utils::pgmToStdString(_stateTopic),
-            payload
-        );
-    } else {
-        return _client.publish(_stateTopic, payload);
+        result += _topicPrefix;
     }
+
+    result += topic;
+
+    if (_index > 0) {
+        result += '/' + std::to_string(_index);
+    }
+
+    return result;
 }

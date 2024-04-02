@@ -107,6 +107,18 @@ public:
         , _publishOnWrite(publishOnWrite)
     {}
 
+    explicit MqttVariable(
+        std::string_view topicPrefix,
+        PGM_P stateTopic,
+        PGM_P commandTopic,
+        std::size_t index,
+        MqttClient& client,
+        bool publishOnWrite = false
+    )
+        : MqttVariableBase(std::move(topicPrefix), stateTopic, commandTopic, index, client)
+        , _publishOnWrite(publishOnWrite)
+    {}
+
     MqttVariable& operator=(ValueType v) {
         if (!_publishOnWrite && _value == v) {
             return *this;
@@ -118,6 +130,11 @@ public:
 
         return *this;
     }
+
+    MqttVariable(const MqttVariable&) = delete;
+    MqttVariable(MqttVariable&&) = delete;
+    MqttVariable& operator=(const MqttVariable&) = delete;
+    MqttVariable& operator=(MqttVariable&&) = delete;
 
     explicit operator const ValueType&() const {
         return _value;

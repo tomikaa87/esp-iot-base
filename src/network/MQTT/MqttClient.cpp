@@ -166,7 +166,7 @@ void MqttClient::unregisterVariable(MqttVariableBase* base)
 
 void MqttClient::onClientCallback(const char* const topic, const uint8_t* const payload, const unsigned int length)
 {
-    _log.debug_P(PSTR("onClientCallback: topic=%s, payload=%.*s length=%u"), topic, length, payload, length);
+    _log.debug_P(PSTR("onClientCallback: topic=%s, payload=%.*s, length=%u"), topic, length, payload, length);
 
     const auto variable = std::find_if(
         std::begin(_variables),
