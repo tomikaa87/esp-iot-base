@@ -40,19 +40,19 @@ Logger::Logger(std::string category)
     : _category(std::move(category))
 {}
 
-char Logger::severityIndicator(const Severity severity)
+char Logger::severityIndicator(const Log::Severity severity)
 {
     switch (severity) {
-        case Severity::Error:
+        case Log::Severity::Error:
             return 'E';
             break;
-        case Severity::Warning:
+        case Log::Severity::Warning:
             return 'W';
             break;
-        case Severity::Info:
+        case Log::Severity::Info:
             return 'I';
             break;
-        case Severity::Debug:
+        case Log::Severity::Debug:
             return 'D';
             break;
     }

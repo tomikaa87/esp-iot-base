@@ -21,6 +21,7 @@
 #pragma once
 
 #include "BaseConfig.h"
+#include "LogSeverity.h"
 #include "VersionNumber.h"
 
 #include <cstdint>
@@ -31,6 +32,8 @@ struct ApplicationConfig
 {
     struct Logging
     {
+        Log::Severity maximumLevel{ Log::Severity::Info };
+
         struct Syslog
         {
             bool enabled = false;

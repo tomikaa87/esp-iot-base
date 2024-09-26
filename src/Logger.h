@@ -21,6 +21,7 @@
 #pragma once
 
 #include "ApplicationConfig.h"
+#include "LogSeverity.h"
 
 #include <string>
 
@@ -37,17 +38,13 @@ public:
 
     explicit Logger(std::string category);
 
-    enum class Severity
-    {
-        Error,
-        Warning,
-        Info,
-        Debug
-    };
-
     template <typename... Params>
-    void log(Severity severity, const char* fmt, Params... params) const
+    void log(Log::Severity severity, const char* fmt, Params... params) const
     {
+        if (_p && static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
+            return;
+        }
+
         StreamString ss;
 
         if (!_inBlock) {
@@ -73,8 +70,12 @@ public:
     }
 
     template <typename... Params>
-    void log_P(Severity severity, PGM_P fmt, Params... params) const
+    void log_P(Log::Severity severity, PGM_P fmt, Params... params) const
     {
+        if (_p && static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
+            return;
+        }
+
         StreamString ss;
 
         if (!_inBlock) {
@@ -102,49 +103,49 @@ public:
     template <typename... Params>
     void error(const char* fmt, Params... params) const
     {
-        log(Severity::Error, fmt, params...);
+        log(Log::Severity::Error, fmt, params...);
     }
 
     template <typename... Params>
     void warning(const char* fmt, Params... params) const
     {
-        log(Severity::Warning, fmt, params...);
+        log(Log::Severity::Warning, fmt, params...);
     }
 
     template <typename... Params>
     void info(const char* fmt, Params... params) const
     {
-        log(Severity::Info, fmt, params...);
+        log(Log::Severity::Info, fmt, params...);
     }
 
     template <typename... Params>
     void debug(const char* fmt, Params... params) const
     {
-        log(Severity::Debug, fmt, params...);
+        log(Log::Severity::Debug, fmt, params...);
     }
 
     template <typename... Params>
     void error_P(PGM_P fmt, Params... params) const
     {
-        log_P(Severity::Error, fmt, params...);
+        log_P(Log::Severity::Error, fmt, params...);
     }
 
     template <typename... Params>
     void warning_P(PGM_P fmt, Params... params) const
     {
-        log_P(Severity::Warning, fmt, params...);
+        log_P(Log::Severity::Warning, fmt, params...);
     }
 
     template <typename... Params>
     void info_P(PGM_P fmt, Params... params) const
     {
-        log_P(Severity::Info, fmt, params...);
+        log_P(Log::Severity::Info, fmt, params...);
     }
 
     template <typename... Params>
     void debug_P(PGM_P fmt, Params... params) const
     {
-        log_P(Severity::Debug, fmt, params...);
+        log_P(Log::Severity::Debug, fmt, params...);
     }
 
     struct Block
@@ -164,8 +165,12 @@ public:
     };
 
     template <typename... Params>
-    Block logBlock(Severity severity, const char* fmt, Params... params) const
+    Block logBlock(Log::Severity severity, const char* fmt, Params... params) const
     {
+        if (_p && static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
+            return Block{ _inBlock };
+        }
+
         _inBlock = true;
 
         StreamString ss;
@@ -188,8 +193,12 @@ public:
     }
 
     template <typename... Params>
-    Block logBlock_P(Severity severity, PGM_P fmt, Params... params) const
+    Block logBlock_P(Log::Severity severity, PGM_P fmt, Params... params) const
     {
+        if (_p && static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
+            return Block{ _inBlock };
+        }
+
         _inBlock = true;
 
         StreamString ss;
@@ -214,13 +223,13 @@ public:
     template <typename... Params>
     Block debugBlock(const char* fmt, Params... params) const
     {
-        return logBlock(Severity::Debug, fmt, params...);
+        return logBlock(Log::Severity::Debug, fmt, params...);
     }
 
     template <typename... Params>
     Block debugBlock_P(PGM_P fmt, Params... params) const
     {
-        return logBlock_P(Severity::Debug, fmt, params...);
+        return logBlock_P(Log::Severity::Debug, fmt, params...);
     }
 
 private:
@@ -248,5 +257,5 @@ private:
 
     static Private* _p;
 
-    static char severityIndicator(Severity severity);
+    static char severityIndicator(Log::Severity severity);
 };

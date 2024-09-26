@@ -138,7 +138,7 @@ void SystemClock::updateFromRtc()
     _lastRtcSync = _epoch;
     _synchronized = true;
 
-    _log.info_P(PSTR("epoch after updating: %ld"), _epoch);
+    _log.debug_P(PSTR("epoch after updating: %ld"), _epoch);
 
     sychronizeCLibClock();
 }
