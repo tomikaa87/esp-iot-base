@@ -43,7 +43,7 @@ void SystemClock::task()
 {
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
     if (_lastRtcSync > 0 && _epoch - _lastRtcSync > RtcSyncIntervalSec) {
-        _log.info_P(PSTR("automatic update from RTC triggered"));
+        _log.debug_P(PSTR("automatic update from RTC triggered"));
         updateFromRtc();
     }
 #endif
@@ -79,7 +79,7 @@ bool SystemClock::isSynchronized() const
 
 void SystemClock::setUtcTime(const std::time_t t)
 {
-    _log.info_P(PSTR("setting UTC time: %ld"), t);
+    _log.debug_P(PSTR("setting UTC time: %ld"), t);
 
     _epoch = t;
     _synchronized = true;
@@ -125,7 +125,7 @@ void SystemClock::updateFromRtc()
     rtcTm.tm_mon = dt.month - 1;     // RTC: 1-12, C: 0-11
     rtcTm.tm_year = dt.year + 100;   // RTC: 0-99, C: 1900 + value
 
-    _log.info("time updated from RTC (UTC): %d-%02d-%02d %d:%02d:%02d",
+    _log.debug_P(PSTR("time updated from RTC (UTC): %d-%02d-%02d %d:%02d:%02d"),
         rtcTm.tm_year + 1900,
         rtcTm.tm_mon + 1,
         rtcTm.tm_mday,
@@ -145,7 +145,7 @@ void SystemClock::updateFromRtc()
 
 void SystemClock::updateRtc()
 {
-    _log.info_P(PSTR("updating RTC, epoch: %ld"), _epoch);
+    _log.debug_P(PSTR("updating RTC, epoch: %ld"), _epoch);
 
     const auto tm = gmtime(&_epoch);
 
@@ -161,7 +161,7 @@ void SystemClock::updateRtc()
 
     rtc::setDateTime(dt);
 
-    _log.info("RTC update finished, current time (UTC): %d-%02d-%02d %d:%02d:%02d",
+    _log.debug_P(PSTR("RTC update finished, current time (UTC): %d-%02d-%02d %d:%02d:%02d"),
         tm->tm_year + 1900,
         tm->tm_mon + 1,
         tm->tm_mday,
@@ -175,7 +175,7 @@ void SystemClock::updateRtc()
 
 void SystemClock::sychronizeCLibClock()
 {
-    _log.info_P(PSTR("synchronizing clock of C Runtime Library"));
+    _log.debug_P(PSTR("synchronizing clock of C Runtime Library"));
 
     timeval tv;
     tv.tv_sec = _epoch;

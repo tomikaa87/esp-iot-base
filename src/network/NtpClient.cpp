@@ -32,7 +32,7 @@ void NtpClient::task()
     switch (_state) {
         case State::Idle:
             if (_lastUpdate == 0 || _systemClock.utcTime() - _lastUpdate > UpdateInterval) {
-                _log.info_P(PSTR("update needed, starting"));
+                _log.debug_P(PSTR("update needed, starting"));
                 _state = State::SendPacket;
 
                 _socket.reset(new WiFiUDP);
@@ -43,7 +43,7 @@ void NtpClient::task()
         case State::SendPacket:
             _sendTimestamp = millis();
             sendPacket();
-            _log.info_P(PSTR("waiting for response"));
+            _log.debug_P(PSTR("waiting for response"));
             _state = State::WaitResponse;
             break;
 
