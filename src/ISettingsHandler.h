@@ -31,6 +31,8 @@
 class ISettingsHandler
 {
 public:
+    static constexpr auto ReservedAreaSize{ 8u };
+
     enum class SaveResult
     {
         NoChange,
@@ -39,15 +41,15 @@ public:
     };
 
     template <typename T>
-    bool registerSetting(T& setting)
+    bool registerSetting(T& setting, const size_t address)
     {
-        return registerSettingMemory(reinterpret_cast<uint8_t*>(&setting), sizeof(T));
+        return registerSettingMemory(reinterpret_cast<uint8_t*>(&setting), sizeof(T), address);
     }
 
-    virtual bool registerSettingMemory(uint8_t* ptr, size_t size) = 0;
+    virtual bool registerSettingMemory(uint8_t* ptr, size_t size, size_t address) = 0;
 
     virtual bool load() = 0;
-    virtual SaveResult save() = 0;
+    virtual SaveResult save(bool skipChangeCheck = false) = 0;
 
     enum class DefaultsLoadReason {
         ChecksumError,

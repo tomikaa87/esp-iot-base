@@ -34,21 +34,31 @@ void SettingsHandler::task()
 {
     if (millis() - _saveTimer >= SaveIntervalMs) {
         _saveTimer = millis();
-        save();
+        save(false);
     }
 }
 
-bool SettingsHandler::registerSettingMemory(uint8_t* ptr, const size_t size)
+bool SettingsHandler::registerSettingMemory(uint8_t* ptr, const size_t size, const size_t address)
 {
+    // Can't register setting in the reserved area
+    if (address < 8) {
+        return false;
+    }
+
+    for (const auto& smd : _settings) {
+        // Check if the ranges doesn't overlap: x2 < y1 || x1 > y2
+        if (!((smd.address + smd.size) < address || smd.address > (address + size))) {
+            return false;
+        }
+    }
+
     SettingMetaData smd{};
     smd.ptr = ptr;
     smd.size = size;
-    smd.address = _nextAddress;
+    smd.address = address;
     smd.checksum = Hash::Fletcher16::calculate(ptr, size);
 
     _settings.push_back(smd);
-
-    _nextAddress += size;
 
     return _persistence.allocate(smd.address, smd.size);
 }
@@ -86,15 +96,15 @@ bool SettingsHandler::load()
     return true;
 }
 
-SettingsHandler::SaveResult SettingsHandler::save()
+SettingsHandler::SaveResult SettingsHandler::save(const bool skipChangeCheck)
 {
     Hash::Fletcher16 hdrCksum;
-    auto dataChanged = false;
+    auto dataChanged = skipChangeCheck;
 
     for (auto& s : _settings) {
         const auto checksum = Hash::Fletcher16::calculate(s.ptr, s.size);
         hdrCksum.data(reinterpret_cast<const uint8_t*>(&checksum), sizeof(checksum));
-        if (s.checksum != checksum) {
+        if (skipChangeCheck || s.checksum != checksum) {
             s.checksum = checksum;
             dataChanged = true;
             if (!_persistence.write(s.address, s.ptr, s.size)) {

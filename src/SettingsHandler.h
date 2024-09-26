@@ -144,12 +144,12 @@ public:
 
     explicit SettingsHandler(ISettingsPersistence& persistence);
 
-    bool registerSettingMemory(uint8_t* ptr, size_t size) override;
+    bool registerSettingMemory(uint8_t* ptr, size_t size, size_t address) override;
 
     void task();
 
     bool load() override;
-    SaveResult save() override;
+    SaveResult save(bool skipChangeCheck = false) override;
 
     void setDefaultsLoader(DefaultsLoader&& defaultsLoader) override;
 
