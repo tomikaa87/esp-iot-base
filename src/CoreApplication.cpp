@@ -206,7 +206,7 @@ void CoreApplication::task()
 }
 
 #ifdef IOT_ENABLE_PERSISTENCE
-SettingsHandler& CoreApplication::settings()
+ISettingsHandler& CoreApplication::settings()
 {
     return _p->settings;
 }

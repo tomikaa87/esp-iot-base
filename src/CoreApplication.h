@@ -58,7 +58,7 @@ public:
     void task();
 
 #ifdef IOT_ENABLE_PERSISTENCE
-    SettingsHandler& settings();
+    ISettingsHandler& settings();
 #endif
 
     ISystemClock& systemClock();
