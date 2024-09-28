@@ -28,79 +28,81 @@ MqttClient::MqttClient(const ApplicationConfig& appConfig)
 
 void MqttClient::task()
 {
-    if (_appConfig.mqtt.enabled) {
-        const auto currentTime = millis();
+    if (!_appConfig.mqtt.enabled) {
+        return;
+    }
 
-        if (!_client.connected() && currentTime - _lastConnectAttemptTime >= 5000) {
-            _lastConnectAttemptTime = currentTime;
+    const auto currentTime = millis();
 
-            _log.info(
-                "attempting to connect: brokerIp=%s, brokerPort=%u",
-                _appConfig.mqtt.brokerIp.toString().c_str(),
-                _appConfig.mqtt.brokerPort
-            );
+    if (!_client.connected() && currentTime - _lastConnectAttemptTime >= 5000) {
+        _lastConnectAttemptTime = currentTime;
 
-            if (_client.connect(_appConfig.mqtt.id, _appConfig.mqtt.user, _appConfig.mqtt.password)) {
-                _log.info_P(PSTR("connected"));
+        _log.info(
+            "attempting to connect: brokerIp=%s, brokerPort=%u",
+            _appConfig.mqtt.brokerIp.toString().c_str(),
+            _appConfig.mqtt.brokerPort
+        );
 
-                for (auto& v : _variables) {
-                    const auto topic = v->commandTopic();
-                    if (topic.empty()) {
-                        continue;
-                    }
-                    if (_client.subscribe(topic.c_str())) {
-                        _log.debug_P(PSTR("successfully subscribed: topic=%s"), topic.c_str());
-                    }
+        if (_client.connect(_appConfig.mqtt.id, _appConfig.mqtt.user, _appConfig.mqtt.password)) {
+            _log.info_P(PSTR("connected"));
+
+            for (auto& v : _variables) {
+                const auto topic = v->commandTopic();
+                if (topic.empty()) {
+                    continue;
                 }
-
-                for (auto it = std::begin(_pendingUnSubscriptions); it != std::end(_pendingUnSubscriptions);) {
-                    if (_client.unsubscribe(it->c_str())) {
-                        _log.debug_P(PSTR("successfully unsubscribed: topic=%s"), it->c_str());
-                        it = _pendingUnSubscriptions.erase(it);
-                    } else {
-                        ++it;
-                    }
+                if (_client.subscribe(topic.c_str())) {
+                    _log.debug_P(PSTR("successfully subscribed: topic=%s"), topic.c_str());
                 }
+            }
 
-                for (auto* v : _variables) {
-                    if (v->needsPublishing()) {
-                        v->publish();
-                    }
+            for (auto it = std::begin(_pendingUnSubscriptions); it != std::end(_pendingUnSubscriptions);) {
+                if (_client.unsubscribe(it->c_str())) {
+                    _log.debug_P(PSTR("successfully unsubscribed: topic=%s"), it->c_str());
+                    it = _pendingUnSubscriptions.erase(it);
+                } else {
+                    ++it;
                 }
+            }
 
-                while (!_pendingPublishes.empty()) {
-                    const auto& p = _pendingPublishes.front();
-
-                    _log.debug_P(PSTR("task: publishing pending item, topic=%s, payload=%s"), p.first.c_str(), p.second.c_str());
-
-                    if (_client.publish(p.first.c_str(), p.second.c_str(), true)) {
-                        _pendingPublishes.pop();
-                    } else {
-                        _log.warning_P(PSTR("task: failed to publish pending item"));
-                        break;
-                    }
+            for (auto* v : _variables) {
+                if (v->needsPublishing()) {
+                    v->publish();
                 }
+            }
 
-                while (!_pendingGenerators.empty()) {
-                    const auto& p = _pendingGenerators.front();
+            while (!_pendingPublishes.empty()) {
+                const auto& p = _pendingPublishes.front();
 
-                    const auto topic = p.first();
-                    const auto payload = p.second();
+                _log.debug_P(PSTR("task: publishing pending item, topic=%s, payload=%s"), p.first.c_str(), p.second.c_str());
 
-                    _log.debug_P(PSTR("task: publishing pending item, topic=%s, payload=%s"), topic.c_str(), payload.c_str());
+                if (_client.publish(p.first.c_str(), p.second.c_str(), true)) {
+                    _pendingPublishes.pop();
+                } else {
+                    _log.warning_P(PSTR("task: failed to publish pending item"));
+                    break;
+                }
+            }
 
-                    if (_client.publish(topic.c_str(), payload.c_str(), true)) {
-                        _pendingGenerators.pop();
-                    } else {
-                        _log.warning_P(PSTR("task: failed to publish pending item"));
-                        break;
-                    }
+            while (!_pendingGenerators.empty()) {
+                const auto& p = _pendingGenerators.front();
+
+                const auto topic = p.first();
+                const auto payload = p.second();
+
+                _log.debug_P(PSTR("task: publishing pending item, topic=%s, payload=%s"), topic.c_str(), payload.c_str());
+
+                if (_client.publish(topic.c_str(), payload.c_str(), true)) {
+                    _pendingGenerators.pop();
+                } else {
+                    _log.warning_P(PSTR("task: failed to publish pending item"));
+                    break;
                 }
             }
         }
-
-        _client.loop();
     }
+
+    _client.loop();
 }
 
 bool MqttClient::publish(PGM_P const topic, const std::string& payload, bool dropWhenNotConnected)
@@ -110,6 +112,10 @@ bool MqttClient::publish(PGM_P const topic, const std::string& payload, bool dro
 
 bool MqttClient::publish(const std::string& topic, const std::string& payload, bool dropWhenNotConnected)
 {
+    if (!_appConfig.mqtt.enabled) {
+        return false;
+    }
+
     _log.debug_P(PSTR("publish: topic=%s, payload=%s"), topic.c_str(), payload.c_str());
 
     if (_client.connected()) {
@@ -127,6 +133,10 @@ bool MqttClient::publish(const std::string& topic, const std::string& payload, b
 
 bool MqttClient::publish(StringGenerator&& topic, StringGenerator&& payload)
 {
+    if (!_appConfig.mqtt.enabled) {
+        return false;
+    }
+
     if (_client.connected()) {
         return _client.publish(topic().c_str(), payload().c_str());
     } else {
