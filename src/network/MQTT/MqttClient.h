@@ -33,6 +33,8 @@ public:
     // void unsubscribe(PGM_P topic, MqttVariableBase* base);
     void unregisterVariable(MqttVariableBase* base);
 
+    [[nodiscard]] bool isConnected() const;
+
 private:
     const ApplicationConfig& _appConfig;
     Logger _log{ "MqttClient" };

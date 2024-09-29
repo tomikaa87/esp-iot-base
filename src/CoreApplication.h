@@ -53,22 +53,24 @@ public:
     CoreApplication(const ApplicationConfig& appConfig);
     ~CoreApplication();
 
-    const ApplicationConfig& config() const;
+    [[nodiscard]] const ApplicationConfig& config() const;
 
     void task();
 
 #ifdef IOT_ENABLE_PERSISTENCE
-    ISettingsHandler& settings();
+    [[nodiscard]] ISettingsHandler& settings();
 #endif
 
-    ISystemClock& systemClock();
+    [[nodiscard]] ISystemClock& systemClock();
 
 #ifdef IOT_ENABLE_MQTT
-    MqttClient& mqttClient();
+    [[nodiscard]] MqttClient& mqttClient();
     void setMqttUpdateHandler(MqttUpdateHandler&& handler);
 #endif
 
     void setArduinoOtaEventHandler(ArduinoOtaEventHandler&& handler);
+
+    [[nodiscard]] bool isWifiConnected() const;
 
 private:
     struct Private;

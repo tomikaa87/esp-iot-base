@@ -236,6 +236,11 @@ void CoreApplication::setMqttUpdateHandler(MqttUpdateHandler&& handler)
 }
 #endif
 
+bool CoreApplication::isWifiConnected() const
+{
+    return _p->wifiWatchdog.isConnected();
+}
+
 void IRAM_ATTR CoreApplication::Private::epochTimerIsr()
 {
     if (instance) {

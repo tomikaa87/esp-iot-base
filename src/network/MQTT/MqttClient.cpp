@@ -167,6 +167,11 @@ void MqttClient::unregisterVariable(MqttVariableBase* base)
     }
 }
 
+bool MqttClient::isConnected() const
+{
+    return _client.state() == MQTT_CONNECTED;
+}
+
 void MqttClient::onClientCallback(const char* const topic, const uint8_t* const payload, const unsigned int length)
 {
     _log.debug_P(PSTR("onClientCallback: topic=%s, payload=%.*s, length=%u"), topic, length, payload, length);
