@@ -46,6 +46,7 @@ public:
         }
 
         StreamString ss;
+        ss.reserve(512);
 
         if (!_inBlock) {
             ss.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
@@ -77,6 +78,7 @@ public:
         }
 
         StreamString ss;
+        ss.reserve(512);
 
         if (!_inBlock) {
             ss.printf_P(PSTR("[%c][%s]: "), severityIndicator(severity), _category.c_str());
@@ -174,6 +176,7 @@ public:
         _inBlock = true;
 
         StreamString ss;
+        ss.reserve(512);
 
         ss.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
 
