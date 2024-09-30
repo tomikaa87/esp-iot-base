@@ -42,6 +42,11 @@ public:
     bool operator<(const VersionNumber& other) const;
     bool operator>(const VersionNumber& other) const;
 
+    [[nodiscard]] const auto& parts() const
+    {
+        return _parts;
+    }
+
 private:
     // This overly verbose initialization is needed for xtensa gcc
     std::array<unsigned, 3> _parts = decltype(_parts){ 0 };
