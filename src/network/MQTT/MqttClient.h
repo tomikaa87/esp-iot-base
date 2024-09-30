@@ -17,7 +17,7 @@ class MqttVariableBase;
 class MqttClient
 {
 public:
-    MqttClient(const ApplicationConfig& appConfig);
+    explicit MqttClient(const ApplicationConfig& appConfig);
 
     void task();
 

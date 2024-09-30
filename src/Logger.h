@@ -152,7 +152,7 @@ public:
 
     struct Block
     {
-        Block(bool& inBlock)
+        explicit Block(bool& inBlock)
             : _inBlock(inBlock)
         {}
 

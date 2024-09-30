@@ -65,12 +65,12 @@ public:
 
     bool load()
     {
-        ValueType value{};
+        ValueType loadedValue{};
 
         if (!
             _persistence.read(
                 _address,
-                reinterpret_cast<uint8_t*>(&value),
+                reinterpret_cast<uint8_t*>(&loadedValue),
                 sizeof(ValueType)
             )
         ) {
@@ -78,7 +78,7 @@ public:
         }
 
         Hash::Crc16 crc;
-        crc.update(reinterpret_cast<const uint8_t*>(&value), sizeof(ValueType));
+        crc.update(reinterpret_cast<const uint8_t*>(&loadedValue), sizeof(ValueType));
 
         uint16_t crcValue{ 0xFFFF };
 
@@ -96,7 +96,7 @@ public:
         crc.update(crcValue & 0xFF);
 
         if (crc.value() == 0) {
-            _value = value;
+            _value = loadedValue;
             return true;
         }
 

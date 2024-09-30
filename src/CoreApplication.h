@@ -50,7 +50,7 @@ public:
 
     using ArduinoOtaEventHandler = std::function<void (ArduinoOtaEvent)>;
 
-    CoreApplication(const ApplicationConfig& appConfig);
+    explicit CoreApplication(const ApplicationConfig& appConfig);
     ~CoreApplication();
 
     [[nodiscard]] const ApplicationConfig& config() const;
