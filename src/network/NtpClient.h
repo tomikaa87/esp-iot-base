@@ -35,7 +35,6 @@ class NtpClient
 {
 public:
     // TODO move these to ApplicationConfig
-    static constexpr auto Server = "europe.pool.ntp.org";
 #ifdef IOT_SYSTEM_CLOCK_HW_RTC
     static constexpr auto UpdateInterval = 24 * 60 * 60;
 #else
@@ -48,7 +47,7 @@ public:
     static constexpr auto NtpPort = 123;
     static constexpr auto NtpDefaultLocalPort = 1337;
 
-    NtpClient(SystemClock& clock);
+    NtpClient(SystemClock& clock, const ApplicationConfig& appConfig);
 
     void task();
 
@@ -57,9 +56,10 @@ public:
 
 private:
     SystemClock& _systemClock;
+    const ApplicationConfig& _appConfig;
     Logger _log{ "NtpClient" };
     UpdatedHandler _updatedHandler;
-    std::unique_ptr<WiFiUDP> _socket = nullptr;
+    std::unique_ptr<WiFiUDP> _socket;
     std::time_t _lastUpdate = 0;
     uint32_t _sendTimestamp = 0;
 

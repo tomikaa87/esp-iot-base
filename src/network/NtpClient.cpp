@@ -21,8 +21,9 @@
 #include "SystemClock.h"
 #include "NtpClient.h"
 
-NtpClient::NtpClient(SystemClock& systemClock)
+NtpClient::NtpClient(SystemClock& systemClock, const ApplicationConfig& appConfig)
     : _systemClock(systemClock)
+    , _appConfig(appConfig)
 {
     _log.info_P(PSTR("initializing"));
 }
@@ -32,7 +33,7 @@ void NtpClient::task()
     switch (_state) {
         case State::Idle:
             if (_lastUpdate == 0 || _systemClock.utcTime() - _lastUpdate > UpdateInterval) {
-                _log.debug_P(PSTR("update needed, starting"));
+                _log.debug_P(PSTR("update needed, starting: server=%s"), _appConfig.ntp.server);
                 _state = State::SendPacket;
 
                 _socket.reset(new WiFiUDP);
@@ -108,7 +109,7 @@ void NtpClient::sendPacket()
     packet[13]  = 0x4E;
     packet[15]  = 52;
 
-    if (!_socket->beginPacket(Server, 123)) {
+    if (!_socket->beginPacket(_appConfig.ntp.server, NtpPort)) {
         _log.warning_P(PSTR("cannot send NTP packet, beginPacket() failed"));
         return;
     }

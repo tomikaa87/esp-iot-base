@@ -99,6 +99,11 @@ struct ApplicationConfig
         const char* password = "";
     };
 
+    struct Ntp
+    {
+        const char* server = "pool.ntp.org";
+    };
+
     const VersionNumber applicationVersion{ 1, 9, 0 };
     VersionNumber firmwareVersion;
 
@@ -110,6 +115,7 @@ struct ApplicationConfig
     Serial serial;
     WebServer webServer;
     WiFi wifi;
+    Ntp ntp;
 
     const char* hostName = "";
 };

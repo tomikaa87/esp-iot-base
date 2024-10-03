@@ -53,7 +53,7 @@ struct CoreApplication::Private
         const ApplicationConfig& appConfig
     )
         : appConfig(appConfig)
-        , ntpClient(systemClock)
+        , ntpClient(systemClock, appConfig)
 #ifdef IOT_ENABLE_HTTP_OTA_UPDATE
         , otaUpdater(appConfig, systemClock)
 #endif
