@@ -152,10 +152,14 @@ private:
 
     void updateWithPayload(const std::string& payload) override
     {
-        _value = from_payload<ValueType>(payload);
+        auto value = from_payload<ValueType>(payload);
 
-        if (_changedHandler) {
-            _changedHandler(_value);
+        if (value != _value) {
+            _value = std::move(value);
+
+            if (_changedHandler) {
+                _changedHandler(_value);
+            }
         }
 
         publish();
