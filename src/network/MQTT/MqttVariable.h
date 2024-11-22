@@ -67,33 +67,49 @@ public:
     using ValueType = typename std::remove_reference<T>::type;
     using ChangedHandler = std::function<void (const ValueType& value)>;
 
+    enum class PublishBehavior {
+        OnChange,
+        OnWrite
+    };
+
+    enum class UpdateBehavior {
+        OnChange,
+        OnReceive
+    };
+
     explicit MqttVariable(
         PGM_P stateTopic,
         MqttClient& client,
-        bool publishOnWrite = false
+        const PublishBehavior publishBehavior = PublishBehavior::OnChange,
+        const UpdateBehavior updateBehavior = UpdateBehavior::OnChange
     )
         : MqttVariableBase(stateTopic, client)
-        , _publishOnWrite(publishOnWrite)
+        , _publishBehavior{ publishBehavior }
+        , _updateBehavior{ updateBehavior }
     {}
 
     explicit MqttVariable(
         std::string_view topicPrefix,
         PGM_P stateTopic,
         MqttClient& client,
-        bool publishOnWrite = false
+        const PublishBehavior publishBehavior = PublishBehavior::OnChange,
+        const UpdateBehavior updateBehavior = UpdateBehavior::OnChange
     )
         : MqttVariableBase(std::move(topicPrefix), stateTopic, client)
-        , _publishOnWrite(publishOnWrite)
+        , _publishBehavior{ publishBehavior }
+        , _updateBehavior{ updateBehavior }
     {}
 
     explicit MqttVariable(
         PGM_P stateTopic,
         PGM_P commandTopic,
         MqttClient& client,
-        bool publishOnWrite = false
+        const PublishBehavior publishBehavior = PublishBehavior::OnChange,
+        const UpdateBehavior updateBehavior = UpdateBehavior::OnChange
     )
         : MqttVariableBase(stateTopic, commandTopic, client)
-        , _publishOnWrite(publishOnWrite)
+        , _publishBehavior{ publishBehavior }
+        , _updateBehavior{ updateBehavior }
     {}
 
     explicit MqttVariable(
@@ -101,10 +117,12 @@ public:
         PGM_P stateTopic,
         PGM_P commandTopic,
         MqttClient& client,
-        bool publishOnWrite = false
+        const PublishBehavior publishBehavior = PublishBehavior::OnChange,
+        const UpdateBehavior updateBehavior = UpdateBehavior::OnChange
     )
         : MqttVariableBase(std::move(topicPrefix), stateTopic, commandTopic, client)
-        , _publishOnWrite(publishOnWrite)
+        , _publishBehavior{ publishBehavior }
+        , _updateBehavior{ updateBehavior }
     {}
 
     explicit MqttVariable(
@@ -113,14 +131,16 @@ public:
         PGM_P commandTopic,
         std::size_t index,
         MqttClient& client,
-        bool publishOnWrite = false
+        const PublishBehavior publishBehavior = PublishBehavior::OnChange,
+        const UpdateBehavior updateBehavior = UpdateBehavior::OnChange
     )
         : MqttVariableBase(std::move(topicPrefix), stateTopic, commandTopic, index, client)
-        , _publishOnWrite(publishOnWrite)
+        , _publishBehavior{ publishBehavior }
+        , _updateBehavior{ updateBehavior }
     {}
 
     MqttVariable& operator=(ValueType v) {
-        if (!_publishOnWrite && _value == v) {
+        if (_publishBehavior == PublishBehavior::OnChange && _value == v) {
             return *this;
         }
 
@@ -146,7 +166,8 @@ public:
     }
 
 private:
-    bool _publishOnWrite = false;
+    PublishBehavior _publishBehavior{ PublishBehavior::OnChange };
+    UpdateBehavior _updateBehavior{ UpdateBehavior::OnChange };
     ValueType _value{};
     ChangedHandler _changedHandler;
 
@@ -154,14 +175,17 @@ private:
     {
         auto value = from_payload<ValueType>(payload);
 
-        if (value != _value) {
-            _value = std::move(value);
-
-            if (_changedHandler) {
-                _changedHandler(_value);
-            }
+        if (_updateBehavior == UpdateBehavior::OnChange && value == _value) {
+            return;
         }
 
+        _value = std::move(value);
+
+        if (_changedHandler) {
+            _changedHandler(_value);
+        }
+
+        // To update the value of the state topic
         publish();
     }
 
