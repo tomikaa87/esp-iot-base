@@ -104,7 +104,7 @@ struct ApplicationConfig
         const char* server = "pool.ntp.org";
     };
 
-    const VersionNumber applicationVersion{ 1, 10, 0 };
+    const VersionNumber applicationVersion{ 1, 10, 1 };
     VersionNumber firmwareVersion;
 
     Logging logging;

@@ -42,7 +42,6 @@
 #include "network/MQTT/MqttClient.h"
 #include "network/NtpClient.h"
 #include "network/OtaUpdater.h"
-#include "network/WiFiWatchdog.h"
 
 #include <Arduino.h>
 #include <ArduinoOTA.h>
@@ -121,8 +120,6 @@ struct CoreApplication::Private
     SettingsHandler settings;
 #endif
 
-    WiFiWatchdog wifiWatchdog;
-
     static constexpr auto SlowLoopUpdateIntervalMs = 500;
     uint32_t lastSlowLoopUpdate = 0;
 
@@ -163,8 +160,6 @@ const ApplicationConfig& CoreApplication::config() const
 
 void CoreApplication::task()
 {
-    _p->wifiWatchdog.task();
-
     _p->systemClock.task();
     _p->ntpClient.task();
 
@@ -186,7 +181,7 @@ void CoreApplication::task()
         _p->lastSlowLoopUpdate = currentTime;
 
 #ifdef IOT_ENABLE_HTTP_OTA_UPDATE
-        if (!_p->updateChecked && _p->wifiWatchdog.isConnected() && currentTime - _p->updateCheckTimer >= 5000) {
+        if (!_p->updateChecked && WiFi.isConnected() && currentTime - _p->updateCheckTimer >= 5000) {
             _p->updateChecked = true;
             _p->otaUpdater.forceUpdate();
         }
@@ -238,7 +233,7 @@ void CoreApplication::setMqttUpdateHandler(MqttUpdateHandler&& handler)
 
 bool CoreApplication::isWifiConnected() const
 {
-    return _p->wifiWatchdog.isConnected();
+    return WiFi.isConnected();
 }
 
 void IRAM_ATTR CoreApplication::Private::epochTimerIsr()
@@ -343,6 +338,7 @@ void CoreApplication::Private::setupWiFiStation()
     log.info_P(PSTR("Setting up WiFi station: SSID=%s"), appConfig.wifi.ssid);
 
     WiFi.mode(WIFI_STA);
+    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
     WiFi.setOutputPower(20.5);
