@@ -41,65 +41,71 @@ public:
     template <typename... Params>
     void log(Log::Severity severity, const char* fmt, Params... params) const
     {
-        if (_p && static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
+        if (!_p) {
             return;
         }
 
-        StreamString ss;
-        ss.reserve(512);
+        if (static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
+            return;
+        }
+
+        _p->messageBuffer.clear();
 
         if (!_inBlock) {
-            ss.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
+            _p->messageBuffer.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
         }
 
         if (sizeof...(params) == 0) {
-            ss.print(fmt);
+            _p->messageBuffer.print(fmt);
         } else {
-            ss.printf(fmt, params...);
+            _p->messageBuffer.printf(fmt, params...);
         }
 
         if (_p && _p->appConfig.logging.syslog.enabled) {
-            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
+            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, _p->messageBuffer.c_str());
         }
 
         // Print new line after sending the message to Syslog server
         if (!_inBlock) {
-            ss.println();
+            _p->messageBuffer.println();
         }
 
-        Serial.print(ss);
+        Serial.print(_p->messageBuffer);
     }
 
     template <typename... Params>
     void log_P(Log::Severity severity, PGM_P fmt, Params... params) const
     {
-        if (_p && static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
+        if (!_p) {
             return;
         }
 
-        StreamString ss;
-        ss.reserve(512);
+        if (static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
+            return;
+        }
+
+        _p->messageBuffer.clear();
 
         if (!_inBlock) {
-            ss.printf_P(PSTR("[%c][%s]: "), severityIndicator(severity), _category.c_str());
+            _p->messageBuffer.printf_P(PSTR("[%c][%s]: "), severityIndicator(severity), _category.c_str());
         }
 
         if (sizeof...(params) == 0) {
-            ss.printf_P(PSTR("%s"), fmt);
+            _p->messageBuffer.printf_P(PSTR("%s"), fmt);
         } else {
-            ss.printf_P(fmt, params...);
+            _p->messageBuffer.printf_P(fmt, params...);
         }
 
         if (_p && _p->appConfig.logging.syslog.enabled) {
-            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
+            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, _p->messageBuffer.c_str());
         }
 
         // Print new line after sending the message to Syslog server
         if (!_inBlock) {
-            ss.println();
+            _p->messageBuffer.println();
         }
 
-        Serial.print(ss);
+        Serial.print(_p->messageBuffer);
     }
 
     template <typename... Params>
@@ -169,27 +175,30 @@ public:
     template <typename... Params>
     Block logBlock(Log::Severity severity, const char* fmt, Params... params) const
     {
+        if (!_p) {
+            return Block{ _inBlock };
+        }
+
         if (_p && static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
             return Block{ _inBlock };
         }
 
         _inBlock = true;
 
-        StreamString ss;
-        ss.reserve(512);
+        _p->messageBuffer.clear();
 
-        ss.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
+        _p->messageBuffer.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
 
         if (sizeof...(params) == 0) {
-            ss.print(fmt);
+            _p->messageBuffer.print(fmt);
         } else {
-            ss.printf(fmt, params...);
+            _p->messageBuffer.printf(fmt, params...);
         }
 
-        Serial.print(ss);
+        Serial.print(_p->messageBuffer);
 
         if (_p && _p->appConfig.logging.syslog.enabled) {
-            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
+            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, _p->messageBuffer.c_str());
         }
 
         return Block{ _inBlock };
@@ -198,26 +207,30 @@ public:
     template <typename... Params>
     Block logBlock_P(Log::Severity severity, PGM_P fmt, Params... params) const
     {
-        if (_p && static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
+        if (!_p) {
+            return Block{ _inBlock };
+        }
+
+        if (static_cast<int>(severity) > static_cast<int>(_p->appConfig.logging.maximumLevel)) {
             return Block{ _inBlock };
         }
 
         _inBlock = true;
 
-        StreamString ss;
+        _p->messageBuffer.clear();
 
-        ss.printf_P(PSTR("[%c][%s]: "), severityIndicator(severity), _category.c_str());
+        _p->messageBuffer.printf_P(PSTR("[%c][%s]: "), severityIndicator(severity), _category.c_str());
 
         if (sizeof...(params) == 0) {
-            ss.printf_P(PSTR("%s"), fmt);
+            _p->messageBuffer.printf_P(PSTR("%s"), fmt);
         } else {
-            ss.printf_P(fmt, params...);
+            _p->messageBuffer.printf_P(fmt, params...);
         }
 
-        Serial.print(ss);
+        Serial.print(_p->messageBuffer);
 
         if (_p && _p->appConfig.logging.syslog.enabled) {
-            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, ss.c_str());
+            _p->sendToSyslogServer(_p->appConfig.logging.syslog.hostName, _p->messageBuffer.c_str());
         }
 
         return Block{ _inBlock };
@@ -244,11 +257,20 @@ private:
         Private(const ApplicationConfig& appConfig, const ISystemClock& systemClock)
             : appConfig(appConfig)
             , systemClock(systemClock)
-        {}
+        {
+            messageBuffer.reserve(2048);
+
+            if (appConfig.logging.syslog.enabled) {
+                syslogLineBuffer.reserve(2048);
+            }
+        }
 
         WiFiUDP udp;
         const ApplicationConfig& appConfig;
         const ISystemClock& systemClock;
+
+        StreamString messageBuffer;
+        StreamString syslogLineBuffer;
 
         void sendToSyslogServer(
             const char* hostName,

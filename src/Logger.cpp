@@ -66,7 +66,17 @@ void Logger::Private::sendToSyslogServer(
     const char* procId,
     const char* msgid
 ) {
-    if (!udp.beginPacket(appConfig.logging.syslog.serverHostName, appConfig.logging.syslog.serverPort)) {
+    if (
+        !std::visit(
+            [&](auto& hostAddress) {
+                return udp.beginPacket(
+                    hostAddress,
+                    appConfig.logging.syslog.serverPort
+                );
+            },
+            appConfig.logging.syslog.server
+        )
+    ) {
 #if 0
         Serial.println("[W][Logger] can't send Syslog payload, failed to begin UDP packet");
 #endif
@@ -85,8 +95,8 @@ void Logger::Private::sendToSyslogServer(
         return s;
     }();
 
-    StreamString payload;
-    payload.printf("<191>1 %04u-%02u-%02uT%02u:%02u:%02uZ %s (%s) %s %s - %s",
+
+    syslogLineBuffer.printf("<191>1 %04u-%02u-%02uT%02u:%02u:%02uZ %s (%s) %s %s - %s",
         tm->tm_year + 1900,
         tm->tm_mon + 1,
         tm->tm_mday,
@@ -105,6 +115,6 @@ void Logger::Private::sendToSyslogServer(
     Serial.print(payload);
 #endif
 
-    udp.write(payload.c_str());
+    udp.write(syslogLineBuffer.c_str());
     udp.endPacket();
 }
