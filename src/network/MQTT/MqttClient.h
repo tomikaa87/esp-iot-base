@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <queue>
+#include <sstream>
 #include <vector>
 
 #include <pgmspace.h>
@@ -23,9 +24,9 @@ public:
 
     bool publish(PGM_P topic, const std::string& payload, bool dropWhenNotConnected = true);
     bool publish(const std::string& topic, const std::string& payload, bool dropWhenNotConnected = true);
-    
-    using StringGenerator = std::function<std::string()>;
-    
+
+    using StringGenerator = std::function<void(std::stringstream&)>;
+
     bool publish(StringGenerator&& topic, StringGenerator&& payload);
 
     // void subscribe(PGM_P topic, MqttVariableBase* base);
@@ -46,6 +47,10 @@ private:
     std::vector<std::string> _pendingUnSubscriptions;
     std::queue<std::pair<std::string, std::string>> _pendingPublishes;
     std::queue<std::pair<StringGenerator, StringGenerator>> _pendingGenerators;
+
+    // Use a pre-allocated stream for every topic and payload
+    std::stringstream _topicGeneratorStream;
+    std::stringstream _payloadGeneratoreStream;
 
     void onClientCallback(const char* topic, const uint8_t* payload, const unsigned int length);
 };

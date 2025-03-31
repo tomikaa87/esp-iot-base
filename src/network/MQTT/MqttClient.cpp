@@ -7,6 +7,22 @@
 #include <algorithm>
 #include <string>
 
+namespace
+{
+    void resetStringStream(std::stringstream& ss)
+    {
+        ss.seekg(0, std::ios::beg);
+        ss.seekp(0, std::ios::beg);
+        ss.put(0);
+        ss.seekp(0, std::ios::beg);
+    }
+
+    void terminatStringStream(std::stringstream& ss)
+    {
+        ss.put(0);
+    }
+}
+
 MqttClient::MqttClient(const ApplicationConfig& appConfig)
     : _appConfig(appConfig)
     , _client(
@@ -24,6 +40,22 @@ MqttClient::MqttClient(const ApplicationConfig& appConfig)
             _appConfig.mqtt.broker
         )
     )
+    , _topicGeneratorStream{
+        // FIXME On C++17, stringstream doesn't have a constructor that moves the string, the string will be copied
+        [] {
+            std::string s;
+            s.resize(256);
+            return s;
+        }()
+    }
+    , _payloadGeneratoreStream{
+        // FIXME On C++17, stringstream doesn't have a constructor that moves the string, the string will be copied
+        [] {
+            std::string s;
+            s.resize(MQTT_MAX_PACKET_SIZE);
+            return s;
+        }()
+    }
 {}
 
 void MqttClient::task()
@@ -92,12 +124,21 @@ void MqttClient::task()
             while (!_pendingGenerators.empty()) {
                 const auto& p = _pendingGenerators.front();
 
-                const auto topic = p.first();
-                const auto payload = p.second();
+                resetStringStream(_topicGeneratorStream);
+                p.first(_topicGeneratorStream);
+                terminatStringStream(_topicGeneratorStream);
 
-                _log.debug_P(PSTR("task: publishing pending item, topic=%s, payload=%s"), topic.c_str(), payload.c_str());
+                resetStringStream(_payloadGeneratoreStream);
+                p.second(_payloadGeneratoreStream);
+                terminatStringStream(_payloadGeneratoreStream);
 
-                if (_client.publish(topic.c_str(), payload.c_str(), true)) {
+                _log.debug_P(
+                    PSTR("task: publishing pending item, topic=%s, payload=%s"),
+                    _topicGeneratorStream.str().c_str(),
+                    _payloadGeneratoreStream.str().c_str()
+                );
+
+                if (_client.publish(_topicGeneratorStream.str().c_str(), _payloadGeneratoreStream.str().c_str(), true)) {
                     _pendingGenerators.pop();
                 } else {
                     _log.warning_P(PSTR("task: failed to publish pending item"));
@@ -143,7 +184,15 @@ bool MqttClient::publish(StringGenerator&& topic, StringGenerator&& payload)
     }
 
     if (_client.connected()) {
-        return _client.publish(topic().c_str(), payload().c_str());
+        resetStringStream(_topicGeneratorStream);
+        topic(_topicGeneratorStream);
+        terminatStringStream(_topicGeneratorStream);
+
+        resetStringStream(_payloadGeneratoreStream);
+        payload(_payloadGeneratoreStream);
+        terminatStringStream(_payloadGeneratoreStream);
+
+        return _client.publish(_topicGeneratorStream.str().c_str(), _payloadGeneratoreStream.str().c_str());
     } else {
         _pendingGenerators.emplace(std::move(topic), std::move(payload));
         return false;
