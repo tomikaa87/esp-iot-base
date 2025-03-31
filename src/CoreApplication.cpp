@@ -94,6 +94,8 @@ struct CoreApplication::Private
 
         // TODO de-init before SystemClock is destroyed
         Logger::setup(appConfig, systemClock);
+
+        heapStats.update();
     }
 
     ~Private()
@@ -132,6 +134,33 @@ struct CoreApplication::Private
 #endif
 
     MqttClient mqttClient;
+
+    struct HeapStats
+    {
+        uint32_t min{ UINT_MAX };
+        uint32_t max{ 0 };
+
+        void update()
+        {
+            const auto current = ESP.getFreeHeap();
+
+            min = std::min(min, current);
+            max = std::max(max, current);
+        }
+
+        void print(const Logger& log)
+        {
+            const auto severity = min < 4096 ? Log::Severity::Warning : Log::Severity::Debug;
+
+            log.log(
+                severity,
+                "Free heap: min=%lu, current=%lu, max=%lu, largestBlock=%lu",
+                min, ESP.getFreeHeap(), max,
+                ESP.getMaxFreeBlockSize()
+            );
+        }
+    } heapStats;
+    uint32_t lastHeapStatsUpdate{};
 
     static Private* instance;
     static void epochTimerIsr();
@@ -186,6 +215,8 @@ void CoreApplication::task()
             _p->otaUpdater.forceUpdate();
         }
 #endif
+
+        _p->heapStats.update();
     }
 
 #ifdef IOT_ENABLE_MQTT
@@ -198,6 +229,11 @@ void CoreApplication::task()
         }
     }
 #endif
+
+    if (_p->lastHeapStatsUpdate == 0 || currentTime - _p->lastHeapStatsUpdate >= 10000) {
+        _p->lastHeapStatsUpdate = currentTime;
+        _p->heapStats.print(_p->log);
+    }
 }
 
 #ifdef IOT_ENABLE_PERSISTENCE
