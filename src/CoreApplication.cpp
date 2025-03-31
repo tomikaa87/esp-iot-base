@@ -341,7 +341,12 @@ void CoreApplication::Private::setupWiFiStation()
     WiFi.setPhyMode(WIFI_PHY_MODE_11N);
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
-    WiFi.setOutputPower(20.5);
+    WiFi.setSleepMode(WIFI_NONE_SLEEP);
+
+    // https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html
+    // Reducing to e.g.: 17.5dBm or slightly lower can reduce noise and improve connectivity...
+    WiFi.setOutputPower(17.5);
+
     if (appConfig.hostName != nullptr && strlen(appConfig.hostName) > 0) {
         wifi_station_set_hostname(appConfig.hostName);
     }
