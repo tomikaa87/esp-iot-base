@@ -33,7 +33,13 @@ void NtpClient::task()
     switch (_state) {
         case State::Idle:
             if (_lastUpdate == 0 || _systemClock.utcTime() - _lastUpdate > UpdateInterval) {
-                _log.debug_P(PSTR("update needed, starting: server=%s"), _appConfig.ntp.server);
+                toString(
+                    [&](const auto& hostAddress) {
+                        _log.debug_P(PSTR("update needed, starting: server=%s"), hostAddress);
+                    },
+                    _appConfig.ntp.server
+                );
+
                 _state = State::SendPacket;
 
                 _socket.reset(new WiFiUDP);
@@ -109,7 +115,14 @@ void NtpClient::sendPacket()
     packet[13]  = 0x4E;
     packet[15]  = 52;
 
-    if (!_socket->beginPacket(_appConfig.ntp.server, NtpPort)) {
+    if (
+        !std::visit(
+            [this](const auto& hostAddress) {
+                return _socket->beginPacket(hostAddress, NtpPort);
+            },
+            _appConfig.ntp.server
+        )
+    ) {
         _log.warning_P(PSTR("cannot send NTP packet, beginPacket() failed"));
         return;
     }

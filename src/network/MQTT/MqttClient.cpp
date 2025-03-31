@@ -10,12 +10,19 @@
 MqttClient::MqttClient(const ApplicationConfig& appConfig)
     : _appConfig(appConfig)
     , _client(
-        _appConfig.mqtt.brokerIp,
-        _appConfig.mqtt.brokerPort,
-        [this](const char* topic, const uint8_t* payload, const unsigned int length) {
-            onClientCallback(topic, payload, length);
-        },
-        _wifiClient
+        std::visit(
+            [this](const auto& hostAddress) {
+                return PubSubClient{
+                    hostAddress,
+                    _appConfig.mqtt.brokerPort,
+                    [this](const char* topic, const uint8_t* payload, const unsigned int length) {
+                        onClientCallback(topic, payload, length);
+                    },
+                    _wifiClient
+                };
+            },
+            _appConfig.mqtt.broker
+        )
     )
 {}
 
@@ -30,10 +37,15 @@ void MqttClient::task()
     if (!_client.connected() && currentTime - _lastConnectAttemptTime >= 5000) {
         _lastConnectAttemptTime = currentTime;
 
-        _log.info(
-            "attempting to connect: brokerIp=%s, brokerPort=%u",
-            _appConfig.mqtt.brokerIp.toString().c_str(),
-            _appConfig.mqtt.brokerPort
+        toString(
+            [&](const char* hostAddress) {
+                _log.info(
+                    "attempting to connect: broker=%s, brokerPort=%u",
+                    hostAddress,
+                    _appConfig.mqtt.brokerPort
+                );
+            },
+            _appConfig.mqtt.broker
         );
 
         if (_client.connect(_appConfig.mqtt.id, _appConfig.mqtt.user, _appConfig.mqtt.password)) {

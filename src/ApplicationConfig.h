@@ -21,12 +21,11 @@
 #pragma once
 
 #include "BaseConfig.h"
+#include "HostAddress.h"
 #include "LogSeverity.h"
 #include "VersionNumber.h"
 
 #include <cstdint>
-
-#include <IPAddress.h>
 
 struct ApplicationConfig
 {
@@ -38,7 +37,7 @@ struct ApplicationConfig
         {
             bool enabled = false;
             const char* hostName = "esp-iot";
-            const char* serverHostName = "";
+            HostAddress server;
             uint16_t serverPort = 514;
         };
 
@@ -49,7 +48,7 @@ struct ApplicationConfig
     {
         bool enabled = false;
         const char* id = "esp-iot";
-        IPAddress brokerIp;
+        HostAddress broker;
         uint16_t brokerPort = 1883;
         const char* user = nullptr;
         const char* password = nullptr;
@@ -101,10 +100,10 @@ struct ApplicationConfig
 
     struct Ntp
     {
-        const char* server = "pool.ntp.org";
+        HostAddress server = "pool.ntp.org";
     };
 
-    const VersionNumber applicationVersion{ 1, 10, 1 };
+    const VersionNumber applicationVersion{ 1, 11, 0 };
     VersionNumber firmwareVersion;
 
     Logging logging;
