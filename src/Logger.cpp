@@ -95,6 +95,7 @@ void Logger::Private::sendToSyslogServer(
         return s;
     }();
 
+    syslogLineBuffer.clear();
 
     syslogLineBuffer.printf("<191>1 %04u-%02u-%02uT%02u:%02u:%02uZ %s (%s) %s %s - %s",
         tm->tm_year + 1900,
